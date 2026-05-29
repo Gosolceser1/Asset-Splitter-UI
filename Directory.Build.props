@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Company>Anno Modding Tools</Company>
+    <Copyright>Copyright © 2026</Copyright>
+    <NeutralLanguage>en</NeutralLanguage>
+
+    <!-- Treat warnings as early bug signals across every project in the repo. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1605</WarningsAsErrors>
+  </PropertyGroup>
+</Project>

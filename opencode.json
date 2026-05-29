@@ -1,0 +1,23 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "build": {
+      "mode": "primary",
+      "model": "opencode/deepseek-v4-pro",
+      "permission": {
+        "edit": "allow", "bash": "allow", "read": "allow", "glob": "allow",
+        "grep": "allow", "list": "allow", "task": "allow", "webfetch": "allow",
+        "websearch": "allow", "question": "allow", "todowrite": "allow",
+        "skill": "allow", "external_directory": "allow"
+      }
+    },
+    "plan": {
+      "mode": "primary",
+      "permission": {
+        "edit": "deny", "bash": "deny", "read": "allow", "glob": "allow",
+        "grep": "allow", "list": "allow", "task": "allow", "webfetch": "allow",
+        "websearch": "allow", "question": "allow", "todowrite": "allow", "skill": "allow"
+      }
+    }
+  }
+}
