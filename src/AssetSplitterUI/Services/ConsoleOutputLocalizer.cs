@@ -282,15 +282,12 @@ internal static class ConsoleOutputLocalizer
             {
                 string code = line[1..close];
                 string rest = line[(close + 1)..].Trim();
-                if (rest.StartsWith("occurrence", StringComparison.Ordinal))
+                string countPart = rest.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+                if (int.TryParse(countPart, NumberStyles.Integer, CultureInfo.InvariantCulture, out int count))
                 {
-                    string countPart = rest.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
-                    if (int.TryParse(countPart, NumberStyles.Integer, CultureInfo.InvariantCulture, out int count))
-                    {
-                        key = "issueSummary.groupHeader";
-                        args = [IssueSummaryLocalizer.GetGroupTitle(code), count];
-                        return true;
-                    }
+                    key = "issueSummary.groupHeader";
+                    args = [IssueSummaryLocalizer.GetGroupTitle(code), count];
+                    return true;
                 }
             }
         }

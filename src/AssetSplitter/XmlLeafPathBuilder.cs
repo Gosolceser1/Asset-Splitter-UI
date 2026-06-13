@@ -13,8 +13,15 @@ internal static class XmlLeafPathBuilder
 
     private static void Collect(XmlNode node, string currentPathPrefix, List<string> leafPaths)
     {
-        XmlNodeList? xmlNodeList = node.ParentNode?.SelectNodes(node.Name);
+        XmlNode? parent = node.ParentNode;
+        XmlNodeList? xmlNodeList = parent?.SelectNodes(node.Name);
         if (xmlNodeList is null)
+            return;
+
+        // A single call already enumerates every same-named sibling below, so only the
+        // first sibling of each name group should drive collection. Without this guard,
+        // every sibling re-enumerates the whole group, duplicating work and output.
+        if (parent is not null && !ReferenceEquals(parent.SelectSingleNode(node.Name), node))
             return;
 
         string currentPath = currentPathPrefix + node.Name;

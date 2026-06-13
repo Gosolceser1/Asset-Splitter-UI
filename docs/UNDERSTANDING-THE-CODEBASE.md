@@ -30,7 +30,7 @@ The desktop front-end. Built with [Avalonia UI](https://avaloniaui.net/) so it t
   - `SelectedLanguage` — the game language used to resolve GUID display names in output XML
 - **Theme** (Light / Dark / Auto) is persisted in settings and applied via `ApplyTheme()`.
 - Settings (paths, options, theme, UI language, recent paths) are saved by `AppSettingsStore` to `%AppData%\AssetSplitter\settings.json`.
-- `RecentGamePaths` (up to 5 entries) is maintained and shown as a dropdown in the game path field.
+- `RecentGamePaths` (up to 10 entries) is maintained and shown as a dropdown in the game path field.
 - `ChildProcessTracker` ensures the backend process is killed if the UI closes.
 
 #### Two-phase UI model
