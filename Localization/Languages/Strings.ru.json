@@ -168,6 +168,7 @@
     "noLanguagesDetectedMsg": "Не найдены извлеченные файлы языков.\n\nПожалуйста, сначала запустите извлечение активов, чтобы извлечь языки игры.\n\nФайлы языка извлекаются из архивов RDA игры во время процесса извлечения."
   },
   "statusMessages": {
+    "clipboardCopyFailed": "Не удалось скопировать в буфер обмена.",
     "initializingExtraction": "Инициализация извлечения...",
     "preparingExtraction": "Подготовка извлечения...",
     "cancelling": "Отмена...",
@@ -293,7 +294,6 @@
     "singleAsset": "Извлечение одного ресурса для тестирования:",
     "optionCreateAssetMods": "✓ Создать по моду на ассет",
     "optionDebugMode": "✓ Режим отладки",
-    "backendPhase7Label": "=== ЭТАП 7: ПАКЕТЫ МОДОВ АССЕТОВ ===",
     "consoleUiLanguage": "  UI / сообщения консоли:",
     "outputFolders": "Выходные папки:",
     "outputXmlFolder": "  XML-файлы: {0}",

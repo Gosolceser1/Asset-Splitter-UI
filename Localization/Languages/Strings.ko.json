@@ -168,6 +168,7 @@
     "noLanguagesDetectedMsg": "추출된 언어 파일을 찾을 수 없습니다.\n\n게임 언어를 추출하려면 먼저 에셋 추출을 실행하십시오.\n\n언어 파일은 추출 프로세스 중에 게임의 RDA 아카이브에서 추출됩니다."
   },
   "statusMessages": {
+    "clipboardCopyFailed": "클립보드에 복사하지 못했습니다.",
     "initializingExtraction": "추출 초기화 중...",
     "preparingExtraction": "추출 준비 중...",
     "cancelling": "취소 중...",
@@ -293,7 +294,6 @@
     "singleAsset": "테스트용 단일 자산 추출:",
     "optionCreateAssetMods": "✓ 애셋별 모드 생성",
     "optionDebugMode": "✓ 디버그 모드",
-    "backendPhase7Label": "=== 7단계: 에셋 MOD 패키지 ===",
     "consoleUiLanguage": "  UI / 콘솔 메시지:",
     "outputFolders": "출력 폴더:",
     "outputXmlFolder": "  XML 파일: {0}",

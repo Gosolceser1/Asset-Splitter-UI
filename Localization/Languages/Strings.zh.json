@@ -168,6 +168,7 @@
     "noLanguagesDetectedMsg": "未找到已提取的语言文件。\n\n请先运行资源提取以提取游戏语言。\n\n在提取过程中,语言文件从游戏的RDA存档中提取。"
   },
   "statusMessages": {
+    "clipboardCopyFailed": "复制到剪贴板失败。",
     "initializingExtraction": "初始化提取...",
     "preparingExtraction": "准备提取...",
     "cancelling": "取消中...",
@@ -293,7 +294,6 @@
     "singleAsset": "提取单个资源进行测试:",
     "optionCreateAssetMods": "✓ 每个资源创建一个模组",
     "optionDebugMode": "✓ 调试模式",
-    "backendPhase7Label": "=== 阶段 7：资源模组包 ===",
     "consoleUiLanguage": "  界面 / 控制台消息：",
     "outputFolders": "输出文件夹：",
     "outputXmlFolder": "  XML：{0}",

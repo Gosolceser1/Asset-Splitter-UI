@@ -168,6 +168,7 @@
     "noLanguagesDetectedMsg": "Nie znaleziono wyodrębnionych plików języka.\n\nProszę najpierw uruchomić ekstrakcję zasobów, aby wyodrębnić języki gry.\n\nPliki języka są wyodrębniane z archiwów RDA gry podczas procesu ekstrakcji."
   },
   "statusMessages": {
+    "clipboardCopyFailed": "Nie udało się skopiować do schowka.",
     "initializingExtraction": "Inicjowanie ekstrakcji...",
     "preparingExtraction": "Przygotowanie ekstrakcji...",
     "cancelling": "Anulowanie...",
@@ -293,7 +294,6 @@
     "singleAsset": "Ekstrakcja pojedynczego zasobu do testowania:",
     "optionCreateAssetMods": "✓ Utwórz jeden mod na asset",
     "optionDebugMode": "✓ Tryb debugowania",
-    "backendPhase7Label": "=== FAZA 7: PACKI MODÓW ASSETÓW ===",
     "consoleUiLanguage": "  UI / komunikaty konsoli:",
     "outputFolders": "Foldery wyjściowe:",
     "outputXmlFolder": "  Pliki XML: {0}",

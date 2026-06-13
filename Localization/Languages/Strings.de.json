@@ -168,6 +168,7 @@
     "noLanguagesDetectedMsg": "Keine extrahierten Sprachdateien gefunden.\n\nBitte führen Sie zunächst die Asset-Extraktion aus, um Spielsprachen zu extrahieren.\n\nSprachdateien werden während des Extraktionsvorgangs aus den RDA-Archiven des Spiels extrahiert."
   },
   "statusMessages": {
+    "clipboardCopyFailed": "Kopieren in die Zwischenablage fehlgeschlagen.",
     "initializingExtraction": "Extraktion wird initialisiert...",
     "preparingExtraction": "Extraktion wird vorbereitet...",
     "cancelling": "Abbruch...",
@@ -293,7 +294,6 @@
     "singleAsset": "Einzelnen Asset nach GUID extrahieren:",
     "optionCreateAssetMods": "✓ Mod pro Asset erstellen",
     "optionDebugMode": "✓ Debug-Modus",
-    "backendPhase7Label": "=== PHASE 7: ASSET-MOD-PAKETE ===",
     "consoleUiLanguage": "  UI / Konsolenmeldungen:",
     "outputFolders": "Ausgabeordner:",
     "outputXmlFolder": "  XML-Dateien: {0}",

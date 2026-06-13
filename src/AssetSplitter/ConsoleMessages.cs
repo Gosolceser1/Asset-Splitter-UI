@@ -266,6 +266,7 @@ public static class ConsoleMessages
         ["debugAssetModsCreatingPackage"] = "[DEBUG] Creating mod package for: {0}",
         ["debugAssetModsSkippedInvalidMetadata"] = "[DEBUG] Skipped {0} - invalid or missing metadata",
         ["debugAssetModsPackageCreated"] = "[DEBUG] Mod package created: {0} -> GUID {1} ({2})",
+        ["debugModPackageStats"] = "[DEBUG][MODS] Built {0} mod packages ({1} skipped)",
         ["debugTotalArguments"] = "[DEBUG] Total arguments: {0}",
         ["debugFlagsApplied"] = "[DEBUG] Flags applied: -c(comments)={0} -f(BaseAssetGUID)={1} -t(template folders)={2} --modops-wrap={3} --split-templates={4} --create-asset-mods={5}",
         ["debugSingleGuidFilter"] = "[DEBUG] singleGuidFilter='{0}' length={1}",
@@ -645,6 +646,7 @@ public static class ConsoleMessages
         ["issueSummarySampleGuid"] = "GUID {0} — {1}",
         ["issueSummarySampleBulletPrefix"] = "  • ",
         ["issueSummarySampleFileDetail"] = "{0} — {1}",
+        ["issueSummaryNoneRecorded"] = "No structured issues were recorded (0 warnings, 0 errors).",
     };
 
     /// <summary>

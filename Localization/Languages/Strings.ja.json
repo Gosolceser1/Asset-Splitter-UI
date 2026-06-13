@@ -168,6 +168,7 @@
     "noLanguagesDetectedMsg": "抽出されたコンポーネント ファイルが見つかりませんでした。\n\nゲーム言語を抽出するには、まずアセット抽出を実行してください。\n\n言語ファイルは抽出プロセス中にゲームの RDA アーカイブから抽出されます。"
   },
   "statusMessages": {
+    "clipboardCopyFailed": "クリップボードへのコピーに失敗しました。",
     "initializingExtraction": "抽出を初期化中...",
     "preparingExtraction": "抽出を準備中...",
     "cancelling": "キャンセル中...",
@@ -293,7 +294,6 @@
     "singleAsset": "テスト用に単一の資産を抽出:",
     "optionCreateAssetMods": "✓ アセットごとにMODを作成",
     "optionDebugMode": "✓ デバッグモード",
-    "backendPhase7Label": "=== フェーズ 7: アセットMODパッケージ ===",
     "consoleUiLanguage": "  UI / コンソールメッセージ:",
     "outputFolders": "出力フォルダ:",
     "outputXmlFolder": "  XML ファイル: {0}",

@@ -168,6 +168,7 @@
     "noLanguagesDetectedMsg": "No se encontraron archivos de idioma extraídos.\n\nPrimero ejecute la extracción de activos para extraer idiomas del juego.\n\nLos archivos de idioma se extraen de los archivos RDA del juego durante el proceso de extracción."
   },
   "statusMessages": {
+    "clipboardCopyFailed": "Error al copiar al portapapeles.",
     "initializingExtraction": "Inicializando extracción...",
     "preparingExtraction": "Preparando extracción...",
     "cancelling": "Cancelando...",
@@ -293,7 +294,6 @@
     "singleAsset": "Extraer un único asset para pruebas:",
     "optionCreateAssetMods": "✓ Crear un mod por asset",
     "optionDebugMode": "✓ Modo depuración",
-    "backendPhase7Label": "=== FASE 7: PAQUETES DE MOD POR ASSET ===",
     "consoleUiLanguage": "  UI / mensajes de consola:",
     "outputFolders": "Carpetas de salida:",
     "outputXmlFolder": "  Archivos XML: {0}",

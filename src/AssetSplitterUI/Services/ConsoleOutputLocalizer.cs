@@ -32,7 +32,6 @@ internal static class ConsoleOutputLocalizer
         ["=== PHASE 5: TEMPLATE INHERITANCE (MERGE) ==="] = "consoleMessages.backendPhase5MergeLabel",
         ["=== PHASE 6: DEPENDENCY RESOLUTION ==="] = "consoleMessages.backendPhase6DepsLabel",
         ["=== PHASE 7: FORMATTING ==="] = "consoleMessages.backendPhase7FormatLabel",
-        ["=== PHASE 7: ASSET MOD PACKAGES ==="] = "consoleMessages.backendPhase7Label",
         ["=== PHASE 8: ASSET MOD PACKAGES ==="] = "consoleMessages.backendPhase8ModsLabel",
         ["Extracting game data from RDA archives..."] = "consoleMessages.extractingGameData",
         ["done."] = "consoleMessages.done",

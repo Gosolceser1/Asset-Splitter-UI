@@ -168,6 +168,7 @@
     "noLanguagesDetectedMsg": "Nessun file di lingua estratto trovato.\n\nEseguire prima l'estrazione degli asset per estrarre le lingue del gioco.\n\nI file di lingua vengono estratti dagli archivi RDA del gioco durante il processo di estrazione."
   },
   "statusMessages": {
+    "clipboardCopyFailed": "Copia negli appunti non riuscita.",
     "initializingExtraction": "Inizializzazione dell'estrazione...",
     "preparingExtraction": "Preparazione dell'estrazione...",
     "cancelling": "Annullamento...",
@@ -293,7 +294,6 @@
     "singleAsset": "Estrarre un singolo asset per i test:",
     "optionCreateAssetMods": "✓ Crea una mod per asset",
     "optionDebugMode": "✓ Modalità debug",
-    "backendPhase7Label": "=== FASE 7: PACCHETTI MOD PER ASSET ===",
     "consoleUiLanguage": "  UI / messaggi console:",
     "outputFolders": "Cartelle di output:",
     "outputXmlFolder": "  File XML: {0}",

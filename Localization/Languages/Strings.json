@@ -168,6 +168,7 @@
     "noLanguagesDetectedMsg": "No extracted language files found.\n\nPlease run asset extraction first to extract game languages.\n\nLanguage files are extracted from the game's RDA archives during the extraction process."
   },
   "statusMessages": {
+    "clipboardCopyFailed": "Failed to copy to clipboard.",
     "initializingExtraction": "Initializing extraction...",
     "preparingExtraction": "Preparing extraction...",
     "cancelling": "Cancelling...",
@@ -264,7 +265,6 @@
     "backendPhase5MergeLabel": "=== PHASE 5: TEMPLATE INHERITANCE (MERGE) ===",
     "backendPhase6DepsLabel": "=== PHASE 6: DEPENDENCY RESOLUTION ===",
     "backendPhase7FormatLabel": "=== PHASE 7: FORMATTING ===",
-    "backendPhase7Label": "=== PHASE 7: ASSET MOD PACKAGES ===",
     "backendPhase8ModsLabel": "=== PHASE 8: ASSET MOD PACKAGES ===",
     "extractingGameData": "Extracting game data from RDA archives...",
     "readingLanguageFileWithLang": "reading language file ({0})...",
