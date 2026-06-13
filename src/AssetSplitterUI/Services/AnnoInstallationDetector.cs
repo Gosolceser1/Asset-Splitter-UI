@@ -224,11 +224,11 @@ public sealed class AnnoInstallationDetector
                 TryAddInstallation(installations, installPath);
             }
         }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                UILogger.Warning(nameof(AnnoInstallationDetector), "Failed to read Epic manifest");
-                UILogger.Debug(nameof(AnnoInstallationDetector), ex);
-            }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            UILogger.Warning(nameof(AnnoInstallationDetector), "Failed to read Epic manifest");
+            UILogger.Debug(nameof(AnnoInstallationDetector), ex);
+        }
     }
 
     private static bool IsValidAnnoInstallation(string path)

@@ -320,7 +320,6 @@
   "extractConvertingAssets": "[EXTRACT] Converting {0} assets {1}...",
   "extractCreatingXmlMods": "[INFO] Creating XML mod files that Anno can load and apply to the game",
   "extractAssetFailed": "[ERROR] Failed to extract asset {0}: {1}",
-  "phase7AssetModPackages": "=== PHASE 7: ASSET MOD PACKAGES ===",
   "phase8AssetModPackages": "=== PHASE 8: ASSET MOD PACKAGES ===",
   "assetRegistryBuilding": "[ASSETS] Building asset registry from game's master asset database...",
   "assetRegistryCataloging": "[INFO] Cataloging all buildings, products, and items in the game",

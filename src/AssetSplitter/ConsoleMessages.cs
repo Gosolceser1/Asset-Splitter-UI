@@ -146,7 +146,6 @@ public static class ConsoleMessages
         ["splittingTemplates"] = "Splitting templates.xml into output_templates_{0}...",
         ["splitTemplatesComplete"] = "Created {0} template files in folder: {1}",
         ["annotatingTemplateComments"] = "Adding GUID comments to template files...",
-        ["phase7AssetModPackages"] = "=== PHASE 7: ASSET MOD PACKAGES ===",
         ["phase8AssetModPackages"] = "=== PHASE 8: ASSET MOD PACKAGES ===",
         ["assetRegistryBuilding"] = "[ASSETS] Building asset registry from game's master asset database...",
         ["assetRegistryCataloging"] = "[INFO] Cataloging all buildings, products, and items in the game",
