@@ -1,0 +1,406 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:AssetSplitterUI.Localization"
+             xmlns:fluent="using:Avalonia.Themes.Fluent"
+             x:Class="AssetSplitterUI.App">
+    <!-- RequestedThemeVariant set from code (Light/Auto/Dark from settings) -->
+
+    <Application.Styles>
+        <FluentTheme>
+            <FluentTheme.Palettes>
+                <fluent:ColorPaletteResources x:Key="Dark"
+                    RegionColor="#07130F"
+                    BaseHigh="#F4EFE3"
+                    BaseMedium="#9EA692"
+                    ChromeMediumLow="#16261F"
+                    ChromeLow="#0B1712"
+                    ListLow="#20362B"
+                    ListMedium="#182A22"/>
+                <fluent:ColorPaletteResources x:Key="Light"
+                    RegionColor="#F7F7F7"
+                    BaseHigh="#242B38"
+                    BaseMedium="#5C5A53"
+                    ChromeMediumLow="#FFFFFF"
+                    ChromeLow="#F1F1EE"
+                    ListLow="#E8E8E4"
+                    ListMedium="#FFFFFF"/>
+            </FluentTheme.Palettes>
+        </FluentTheme>
+    </Application.Styles>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <!-- Default (same as Dark) — Celtic-Roman: game-accurate palette from guicolors.lua + deity_colors.lua -->
+                <ResourceDictionary x:Key="Default">
+                    <Color x:Key="PrimaryColor">#10231B</Color>
+                    <Color x:Key="PrimaryDarkColor">#07130F</Color>
+                    <Color x:Key="AccentColor">#D4A843</Color>
+                    <Color x:Key="AccentHoverColor">#E9C86A</Color>
+                    <Color x:Key="SuccessColor">#5DBE6E</Color>
+                    <Color x:Key="WarningColor">#E8B44A</Color>
+                    <Color x:Key="ErrorColor">#D94545</Color>
+                    <Color x:Key="NeutralColor">#254034</Color>
+                    <Color x:Key="BackgroundColor">#07110D</Color>
+                    <Color x:Key="SurfaceColor">#14241D</Color>
+                    <Color x:Key="BorderColor">#2B4037</Color>
+                    <Color x:Key="TextPrimaryColor">#F4EFE3</Color>
+                    <Color x:Key="TextSecondaryColor">#AEB7A6</Color>
+                    <Color x:Key="PlaceholderColor">#7F8A7A</Color>
+                    <Color x:Key="HeaderTitleColor">#FFF7E8</Color>
+                    <Color x:Key="HeaderSubtitleColor">#B8C6B0</Color>
+                    <Color x:Key="BannerAccentColor">#D4A843</Color>
+                    <Color x:Key="NeutralHoverColor">#2C4C3D</Color>
+                    <Color x:Key="ProgressTrackColor">#1C3026</Color>
+                    <Color x:Key="ConsoleBackgroundColor">#07130F</Color>
+                    <Color x:Key="ConsoleForegroundColor">#E6F0DE</Color>
+                    <Color x:Key="PaneChromeColor">#0A1712</Color>
+                    <Color x:Key="PaneWellColor">#0D1B15</Color>
+                    <Color x:Key="DetailSectionSurfaceColor">#10221B</Color>
+                    <Color x:Key="ListSelectedColor">#274B3A</Color>
+                    <Color x:Key="ListHoverColor">#1C3529</Color>
+                    <Color x:Key="HoverOverlayColor">#274536</Color>
+                    <Color x:Key="GoldEdgeColor">#80D4A843</Color>
+                    <Color x:Key="TooltipPanelBgColor">#1B3026</Color>
+                    <Color x:Key="ToggleOnColor">#3F8F5A</Color>
+                    <Color x:Key="ToggleOnHoverColor">#58AA6F</Color>
+                    <Color x:Key="ToggleOffColor">#303A34</Color>
+                    <Color x:Key="ToggleOffHoverColor">#3B4740</Color>
+                    <Color x:Key="ToggleKnobColor">#FFF7E8</Color>
+                    <Color x:Key="AnnoFluentBaseMedium">#9EA692</Color>
+                    <Color x:Key="InputSurfaceColor">#0D1B15</Color>
+                    <Color x:Key="InputBorderColor">#2B4037</Color>
+                    <Color x:Key="FocusBorderColor">#D4A843</Color>
+                    <Color x:Key="PhaseTitleColor">#E9C86A</Color>
+                    <Color x:Key="SectionHeaderForegroundColor">#D4A843</Color>
+                    <Color x:Key="DisabledButtonBackgroundColor">#303A34</Color>
+                    <Color x:Key="DisabledButtonForegroundColor">#7F8A7A</Color>
+                    <x:Double x:Key="ProgressBarHeight">12</x:Double>
+                    <x:Double x:Key="ConsoleLogFontSize">13</x:Double>
+                    <BoxShadows x:Key="CardShadow">0 10 28 0 #26000000, 0 1 0 0 #18FFFFFF</BoxShadows>
+                    <BoxShadows x:Key="InsetPanelShadow">0 3 10 0 #18000000</BoxShadows>
+                </ResourceDictionary>
+                <!-- Dark theme — Celtic-Roman blend -->
+                <ResourceDictionary x:Key="Dark">
+                    <Color x:Key="PrimaryColor">#10231B</Color>
+                    <Color x:Key="PrimaryDarkColor">#07130F</Color>
+                    <Color x:Key="AccentColor">#D4A843</Color>
+                    <Color x:Key="AccentHoverColor">#E9C86A</Color>
+                    <Color x:Key="SuccessColor">#5DBE6E</Color>
+                    <Color x:Key="WarningColor">#E8B44A</Color>
+                    <Color x:Key="ErrorColor">#D94545</Color>
+                    <Color x:Key="NeutralColor">#2B4B3C</Color>
+                    <Color x:Key="BackgroundColor">#08130F</Color>
+                    <Color x:Key="SurfaceColor">#16261F</Color>
+                    <Color x:Key="BorderColor">#334A3F</Color>
+                    <Color x:Key="TextPrimaryColor">#F4EFE3</Color>
+                    <Color x:Key="TextSecondaryColor">#AEB7A6</Color>
+                    <Color x:Key="PlaceholderColor">#7F8A7A</Color>
+                    <Color x:Key="HeaderTitleColor">#FFF7E8</Color>
+                    <Color x:Key="HeaderSubtitleColor">#B8C6B0</Color>
+                    <Color x:Key="BannerAccentColor">#D4A843</Color>
+                    <Color x:Key="NeutralHoverColor">#355A48</Color>
+                    <Color x:Key="ProgressTrackColor">#20352A</Color>
+                    <Color x:Key="ConsoleBackgroundColor">#07130F</Color>
+                    <Color x:Key="ConsoleForegroundColor">#E6F0DE</Color>
+                    <Color x:Key="PaneChromeColor">#0A1712</Color>
+                    <Color x:Key="PaneWellColor">#0D1B15</Color>
+                    <Color x:Key="DetailSectionSurfaceColor">#10221B</Color>
+                    <Color x:Key="ListSelectedColor">#274B3A</Color>
+                    <Color x:Key="ListHoverColor">#1C3529</Color>
+                    <Color x:Key="HoverOverlayColor">#274536</Color>
+                    <Color x:Key="GoldEdgeColor">#A0D4A843</Color>
+                    <Color x:Key="TooltipPanelBgColor">#1B3026</Color>
+                    <Color x:Key="ToggleOnColor">#3F8F5A</Color>
+                    <Color x:Key="ToggleOnHoverColor">#58AA6F</Color>
+                    <Color x:Key="ToggleOffColor">#343D38</Color>
+                    <Color x:Key="ToggleOffHoverColor">#404B45</Color>
+                    <Color x:Key="ToggleKnobColor">#FFF7E8</Color>
+                    <Color x:Key="AnnoFluentBaseMedium">#9EA692</Color>
+                    <Color x:Key="InputSurfaceColor">#0D1B15</Color>
+                    <Color x:Key="InputBorderColor">#334A3F</Color>
+                    <Color x:Key="FocusBorderColor">#D4A843</Color>
+                    <Color x:Key="PhaseTitleColor">#E9C86A</Color>
+                    <Color x:Key="SectionHeaderForegroundColor">#D4A843</Color>
+                    <Color x:Key="DisabledButtonBackgroundColor">#343D38</Color>
+                    <Color x:Key="DisabledButtonForegroundColor">#7F8A7A</Color>
+                    <x:Double x:Key="ProgressBarHeight">12</x:Double>
+                    <x:Double x:Key="ConsoleLogFontSize">13</x:Double>
+                    <BoxShadows x:Key="CardShadow">0 10 28 0 #26000000, 0 1 0 0 #18FFFFFF</BoxShadows>
+                    <BoxShadows x:Key="InsetPanelShadow">0 3 10 0 #18000000</BoxShadows>
+                </ResourceDictionary>
+                <!-- Light theme — Celtic-Roman: warm stone + gold accent -->
+                <ResourceDictionary x:Key="Light">
+                    <Color x:Key="PrimaryColor">#243126</Color>
+                    <Color x:Key="PrimaryDarkColor">#18231C</Color>
+                    <Color x:Key="AccentColor">#8B5E00</Color>
+                    <Color x:Key="AccentHoverColor">#A87910</Color>
+                    <Color x:Key="SuccessColor">#28743A</Color>
+                    <Color x:Key="WarningColor">#8A5A00</Color>
+                    <Color x:Key="ErrorColor">#B4212A</Color>
+                    <Color x:Key="NeutralColor">#3E6F4C</Color>
+                    <Color x:Key="BackgroundColor">#E7ECE5</Color>
+                    <Color x:Key="SurfaceColor">#FBFCF8</Color>
+                    <Color x:Key="BorderColor">#8A9688</Color>
+                    <Color x:Key="TextPrimaryColor">#1E2A22</Color>
+                    <Color x:Key="TextSecondaryColor">#3D4F42</Color>
+                    <Color x:Key="PlaceholderColor">#7A8378</Color>
+                    <Color x:Key="HeaderTitleColor">#FFF7E8</Color>
+                    <Color x:Key="HeaderSubtitleColor">#DACBA6</Color>
+                    <Color x:Key="BannerAccentColor">#8B5E00</Color>
+                    <Color x:Key="NeutralHoverColor">#4B8059</Color>
+                    <Color x:Key="ProgressTrackColor">#B0BAB0</Color>
+                    <Color x:Key="ConsoleBackgroundColor">#EAF0E8</Color>
+                    <Color x:Key="ConsoleForegroundColor">#1E2A22</Color>
+                    <Color x:Key="PaneChromeColor">#DDE5DA</Color>
+                    <Color x:Key="PaneWellColor">#F4F7F1</Color>
+                    <Color x:Key="DetailSectionSurfaceColor">#F7FAF4</Color>
+                    <Color x:Key="ListSelectedColor">#A8C4A0</Color>
+                    <Color x:Key="ListHoverColor">#C5D4C0</Color>
+                    <Color x:Key="HoverOverlayColor">#DCE7D7</Color>
+                    <Color x:Key="GoldEdgeColor">#B08B5E00</Color>
+                    <Color x:Key="TooltipPanelBgColor">#F8FAF6</Color>
+                    <Color x:Key="ToggleOnColor">#367D48</Color>
+                    <Color x:Key="ToggleOnHoverColor">#459157</Color>
+                    <Color x:Key="ToggleOffColor">#BFC7BC</Color>
+                    <Color x:Key="ToggleOffHoverColor">#B2BCB0</Color>
+                    <Color x:Key="ToggleKnobColor">#FFFDF7</Color>
+                    <Color x:Key="AnnoFluentBaseMediumLight">#526153</Color>
+                    <Color x:Key="InputSurfaceColor">#FFFFFF</Color>
+                    <Color x:Key="InputBorderColor">#8A9688</Color>
+                    <Color x:Key="FocusBorderColor">#8B5E00</Color>
+                    <Color x:Key="PhaseTitleColor">#6B4700</Color>
+                    <Color x:Key="SectionHeaderForegroundColor">#18231C</Color>
+                    <Color x:Key="DisabledButtonBackgroundColor">#C5CCC2</Color>
+                    <Color x:Key="DisabledButtonForegroundColor">#5A6358</Color>
+                    <x:Double x:Key="ProgressBarHeight">14</x:Double>
+                    <x:Double x:Key="ConsoleLogFontSize">13.5</x:Double>
+                    <BoxShadows x:Key="CardShadow">0 8 22 0 #32000000, 0 1 0 0 #55FFFFFF</BoxShadows>
+                    <BoxShadows x:Key="InsetPanelShadow">0 2 12 0 #2A000000</BoxShadows>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+            <SolidColorBrush x:Key="NeutralHoverBrush" Color="{DynamicResource NeutralHoverColor}" />
+            <!-- Brushes (reference theme colors via DynamicResource in styles) -->
+            <SolidColorBrush x:Key="PrimaryBrush" Color="{DynamicResource PrimaryColor}" />
+            <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{DynamicResource PrimaryDarkColor}" />
+            <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource AccentColor}" />
+            <SolidColorBrush x:Key="AccentHoverBrush" Color="{DynamicResource AccentHoverColor}" />
+            <SolidColorBrush x:Key="SuccessBrush" Color="{DynamicResource SuccessColor}" />
+            <SolidColorBrush x:Key="WarningBrush" Color="{DynamicResource WarningColor}" />
+            <SolidColorBrush x:Key="ErrorBrush" Color="{DynamicResource ErrorColor}" />
+            <SolidColorBrush x:Key="NeutralBrush" Color="{DynamicResource NeutralColor}" />
+            <SolidColorBrush x:Key="BackgroundBrush" Color="{DynamicResource BackgroundColor}" />
+            <SolidColorBrush x:Key="SurfaceBrush" Color="{DynamicResource SurfaceColor}" />
+            <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderColor}" />
+            <SolidColorBrush x:Key="TextPrimaryBrush" Color="{DynamicResource TextPrimaryColor}" />
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="{DynamicResource TextSecondaryColor}" />
+            <SolidColorBrush x:Key="PlaceholderBrush" Color="{DynamicResource PlaceholderColor}" />
+            <SolidColorBrush x:Key="HeaderTitleBrush" Color="{DynamicResource HeaderTitleColor}" />
+            <SolidColorBrush x:Key="HeaderSubtitleBrush" Color="{DynamicResource HeaderSubtitleColor}" />
+            <SolidColorBrush x:Key="BannerAccentBrush" Color="{DynamicResource BannerAccentColor}" />
+            <SolidColorBrush x:Key="ProgressTrackBrush" Color="{DynamicResource ProgressTrackColor}" />
+            <SolidColorBrush x:Key="ConsoleBackgroundBrush" Color="{DynamicResource ConsoleBackgroundColor}" />
+            <SolidColorBrush x:Key="ConsoleForegroundBrush" Color="{DynamicResource ConsoleForegroundColor}" />
+            <SolidColorBrush x:Key="InputSurfaceBrush" Color="{DynamicResource InputSurfaceColor}" />
+            <SolidColorBrush x:Key="InputBorderBrush" Color="{DynamicResource InputBorderColor}" />
+            <SolidColorBrush x:Key="FocusBorderBrush" Color="{DynamicResource FocusBorderColor}" />
+            <SolidColorBrush x:Key="PhaseTitleBrush" Color="{DynamicResource PhaseTitleColor}" />
+            <SolidColorBrush x:Key="SectionHeaderForegroundBrush" Color="{DynamicResource SectionHeaderForegroundColor}" />
+            <SolidColorBrush x:Key="DisabledButtonBackgroundBrush" Color="{DynamicResource DisabledButtonBackgroundColor}" />
+            <SolidColorBrush x:Key="DisabledButtonForegroundBrush" Color="{DynamicResource DisabledButtonForegroundColor}" />
+            <SolidColorBrush x:Key="PaneChromeBrush" Color="{DynamicResource PaneChromeColor}" />
+            <SolidColorBrush x:Key="PaneWellBrush" Color="{DynamicResource PaneWellColor}" />
+            <SolidColorBrush x:Key="DetailSectionSurfaceBrush" Color="{DynamicResource DetailSectionSurfaceColor}" />
+            <SolidColorBrush x:Key="ListSelectedBrush" Color="{DynamicResource ListSelectedColor}" />
+            <SolidColorBrush x:Key="ListHoverBrush" Color="{DynamicResource ListHoverColor}" />
+            <SolidColorBrush x:Key="HoverOverlayBrush" Color="{DynamicResource HoverOverlayColor}" />
+            <SolidColorBrush x:Key="GoldEdgeBrush" Color="{DynamicResource GoldEdgeColor}" />
+            <SolidColorBrush x:Key="TooltipPanelBgBrush" Color="{DynamicResource TooltipPanelBgColor}" />
+
+            <!-- ToggleSwitch palette: readable off state, Celtic green on state, warm ivory knob. -->
+            <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="{DynamicResource ToggleOnColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="{DynamicResource ToggleOnHoverColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="{DynamicResource ToggleOnColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="{DynamicResource GoldEdgeColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOnPointerOver" Color="{DynamicResource AccentHoverColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOnPressed" Color="{DynamicResource AccentColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="{DynamicResource ToggleKnobColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="{DynamicResource ToggleKnobColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPressed" Color="{DynamicResource ToggleKnobColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOff" Color="{DynamicResource ToggleOffColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOffPointerOver" Color="{DynamicResource ToggleOffHoverColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOffPressed" Color="{DynamicResource ToggleOffColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOff" Color="{DynamicResource BorderColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOffPointerOver" Color="{DynamicResource GoldEdgeColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOffPressed" Color="{DynamicResource AccentColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOff" Color="{DynamicResource ToggleKnobColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOffPointerOver" Color="{DynamicResource ToggleKnobColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOffPressed" Color="{DynamicResource ToggleKnobColor}" />
+            <SolidColorBrush x:Key="ToggleSwitchContainerBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ToggleSwitchContainerBackgroundPointerOver" Color="Transparent" />
+            <SolidColorBrush x:Key="ToggleSwitchContainerBackgroundPressed" Color="Transparent" />
+
+            <!-- Fluent scrollbar resource keys — set accent-coloured thumb on a subtle track -->
+            <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="{DynamicResource AccentColor}" />
+            <SolidColorBrush x:Key="ScrollBarTrackBrush" Color="{DynamicResource ProgressTrackColor}" />
+            <SolidColorBrush x:Key="ScrollBarThumbPointerOverBrush" Color="{DynamicResource AccentHoverColor}" />
+            <SolidColorBrush x:Key="ScrollBarThumbPressedBrush" Color="{DynamicResource BannerAccentColor}" />
+
+            <LinearGradientBrush x:Key="GoldLineBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#00D4A843" Offset="0" />
+                <GradientStop Color="#AAD4A843" Offset="0.35" />
+                <GradientStop Color="#55F0D060" Offset="0.65" />
+                <GradientStop Color="#00D4A843" Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="ActionBarBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#16261F" Offset="0"/>
+                <GradientStop Color="#10231B" Offset="1"/>
+            </LinearGradientBrush>
+
+            <!-- Celtic-Roman transitioning gradients: gold → teal → forest -->
+            <LinearGradientBrush x:Key="CelticRomanDividerBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#00D4A843" Offset="0" />
+                <GradientStop Color="#CCD4A843" Offset="0.15" />
+                <GradientStop Color="#662E9A8E" Offset="0.55" />
+                <GradientStop Color="#005DBE6E" Offset="0.85" />
+                <GradientStop Color="#00000000" Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="GoldToTealAccentBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#D4A843" Offset="0" />
+                <GradientStop Color="#C4923F" Offset="0.25" />
+                <GradientStop Color="#6B9A8A" Offset="0.55" />
+                <GradientStop Color="#2E9A8E" Offset="0.8" />
+                <GradientStop Color="#3D8A7A" Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="GoldToTealVerticalBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#D4A843" Offset="0" />
+                <GradientStop Color="#8A9A7E" Offset="0.5" />
+                <GradientStop Color="#2E9A8E" Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="GoldToTealDiagonalBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#D4A843" Offset="0" />
+                <GradientStop Color="#C4923F" Offset="0.2" />
+                <GradientStop Color="#667A8E" Offset="0.5" />
+                <GradientStop Color="#2E9A8E" Offset="0.8" />
+                <GradientStop Color="#5DBE6E" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- Progress bar glow: gold running → green complete → red error -->
+            <LinearGradientBrush x:Key="ProgressGlowBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#D4A843" Offset="0" />
+                <GradientStop Color="#F0D060" Offset="0.3" />
+                <GradientStop Color="#D4A843" Offset="0.6" />
+                <GradientStop Color="#8A9A7E" Offset="0.8" />
+                <GradientStop Color="#2E9A8E" Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="PanelTopSheenBrush" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#14FFFFFF" Offset="0" />
+                <GradientStop Color="#00FFFFFF" Offset="0.45" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="ConsoleWellBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#0A1712" Offset="0" />
+                <GradientStop Color="#07130F" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- Gradients updated at runtime on theme switch by ApplicationThemeService
+                 (replacing the brush object triggers {DynamicResource} re-evaluation). -->
+            <LinearGradientBrush x:Key="HeaderChromeBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#07130F" Offset="0"/>
+                <GradientStop Color="#10231B" Offset="0.35"/>
+                <GradientStop Color="#10231B" Offset="0.72"/>
+                <GradientStop Color="#0A1712" Offset="1"/>
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="SectionHeaderGlowBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#D4A843" Offset="0" />
+                <GradientStop Color="#88D4A843" Offset="0.4" />
+                <GradientStop Color="#222E9A8E" Offset="0.7" />
+                <GradientStop Color="#005DBE6E" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="SectionGoldBorderBrush" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="#D4A843" Offset="0"/>
+                <GradientStop Color="#D4A843" Offset="0.003"/>
+                <GradientStop Color="#2E9A8E" Offset="0.005"/>
+                <GradientStop Color="#334A3F" Offset="1"/>
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="SectionDiagonalBgBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#16261F" Offset="0" />
+                <GradientStop Color="#10221B" Offset="0.52" />
+                <GradientStop Color="#0D1B15" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="ProgressTrackGlowBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#20352A" Offset="0" />
+                <GradientStop Color="#182C22" Offset="0.5" />
+                <GradientStop Color="#20352A" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="HeaderTextGlowBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#E9C86A" Offset="0" />
+                <GradientStop Color="#FFF7E8" Offset="0.7" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="ListHeaderSheenBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#1B3026" Offset="0" />
+                <GradientStop Color="#14261E" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- CardShadow / InsetPanelShadow are defined per theme dictionary (Light uses stronger depth). -->
+            <BoxShadows x:Key="LiftShadow">0 16 42 0 #36000000, 0 1 0 0 #22FFFFFF</BoxShadows>
+            <BoxShadows x:Key="SoftShadow">0 4 14 0 #24000000, 0 1 0 0 #12FFFFFF</BoxShadows>
+            <BoxShadows x:Key="ButtonShadow">0 3 8 0 #26000000, 0 1 0 0 #30FFFFFF</BoxShadows>
+
+            <CornerRadius x:Key="RadiusSm">6</CornerRadius>
+            <CornerRadius x:Key="RadiusMd">10</CornerRadius>
+            <CornerRadius x:Key="RadiusLg">14</CornerRadius>
+
+            <!-- JetBrains Mono — console log, status, and progress (falls back to Consolas / monospace). -->
+            <FontFamily x:Key="JetBrainsMonoFont">avares://AssetSplitterUI/Assets/Fonts#JetBrains Mono,Consolas,monospace</FontFamily>
+
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- Premium gradient effects — Celtic-Roman color transitions  -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+
+            <!-- Button: solid accent with gold→teal hover glow -->
+            <LinearGradientBrush x:Key="ButtonPrimaryBgBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#D4A843" Offset="0" />
+                <GradientStop Color="#A97914" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="ButtonPrimaryHoverBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#F0D060" Offset="0" />
+                <GradientStop Color="#D4A843" Offset="0.4" />
+                <GradientStop Color="#C89828" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- Console panel: deep forest with subtle teal edge glow -->
+            <LinearGradientBrush x:Key="ConsolePanelBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#07130F" Offset="0" />
+                <GradientStop Color="#0D1B15" Offset="0.5" />
+                <GradientStop Color="#10231B" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- Status bar: gold accent strip that fades into teal -->
+            <LinearGradientBrush x:Key="StatusBarAccentBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#D4A843" Offset="0" />
+                <GradientStop Color="#C4923F" Offset="0.3" />
+                <GradientStop Color="#4D8A82" Offset="0.7" />
+                <GradientStop Color="#2E9A8E" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- Glass overlay: translucent frosted panel -->
+            <LinearGradientBrush x:Key="GlassOverlayBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#10D4A843" Offset="0" />
+                <GradientStop Color="#08FFFFFF" Offset="0.3" />
+                <GradientStop Color="#052E9A8E" Offset="0.7" />
+                <GradientStop Color="#08FFFFFF" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- Pulsing accent glow box shadow for active buttons -->
+            <BoxShadows x:Key="AccentGlowShadow">0 0 18 0 #40D4A843, 0 0 36 0 #202E9A8E</BoxShadows>
+            <BoxShadows x:Key="CardGlowShadow">0 4 24 0 #30000000, 0 0 12 0 #10D4A843</BoxShadows>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

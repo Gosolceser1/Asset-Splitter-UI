@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>RDAExplorer</AssemblyName>
+    <RootNamespace>RDAExplorer</RootNamespace>
+    <ApplicationVersion>1.4.0.0</ApplicationVersion>
+  </PropertyGroup>
+
+</Project>

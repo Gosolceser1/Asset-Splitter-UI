@@ -1,0 +1,86 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+*.sln.iml
+
+# NuGet
+**/packages/*
+!**/packages/build/
+
+# User-specific
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# MSTest
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.lscache
+
+# Publish
+publish/
+Asset-Splitter-UI-v*.zip
+
+# Cursor IDE workspace files
+.cursor/
+
+# OpenCode AI config (internal agent tool)
+opencode.json
+.github/workflows/opencode.yml
+
+# Internal development docs (not for public)
+docs/CHAT_HANDOFF.md
+docs/REFACTORING-LOG.md
+docs/reports/
+
+# Stray nested solution files (root AssetSplitter.sln is the canonical one)
+src/AssetSplitter/AnnoAssetSplitter.sln
+src/RDAExplorer/RDAExplorer.sln
+src/RDAExtract/RDAExtract.sln
+
+# Debug session logs
+debug-*.log
+debug-output/
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+
+# JetBrains
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Backup
+*~
+*.bak
+*.swp
+*~

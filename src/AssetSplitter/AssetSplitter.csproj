@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>AssetProcessor</AssemblyName>
+    <RootNamespace>AssetProcessor</RootNamespace>
+    <ApplicationVersion>1.4.0.0</ApplicationVersion>
+    <OutputType>Exe</OutputType>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>1.4.0</Version>
+    <Product>Asset Splitter</Product>
+    <Description>Console tool for extracting Anno game assets from RDA archives</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AssetSplitter.Tests" />
+    <ProjectReference Include="..\RDAExplorer\RDAExplorer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\config\**\*.*" Exclude="..\..\config\**\README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>config\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+</Project>

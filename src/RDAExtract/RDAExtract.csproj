@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>RDAExtract</AssemblyName>
+    <RootNamespace>RDAExtract</RootNamespace>
+    <ApplicationVersion>1.0.0.0</ApplicationVersion>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RDAExplorer\RDAExplorer.csproj" />
+  </ItemGroup>
+
+</Project>

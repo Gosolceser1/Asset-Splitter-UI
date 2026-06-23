@@ -1,0 +1,1051 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:AssetSplitterUI.ViewModels"
+        xmlns:loc="using:AssetSplitterUI.Localization"
+        xmlns:conv="using:AssetSplitterUI.Converters"
+        mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="900"
+        x:Class="AssetSplitterUI.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="{loc:Localize app.windowTitle}"
+        Width="980" Height="820" MinWidth="780" MinHeight="700"
+        Background="{DynamicResource BackgroundBrush}"
+        WindowStartupLocation="Manual">
+    
+    <Window.Resources>
+        <loc:LocalizedDisplayConverter x:Key="LocalizedDisplayConverter"/>
+        <loc:ErrorColorConverter x:Key="ErrorColorConverter"/>
+        <loc:StringToBrushConverter x:Key="StringToBrushConverter"/>
+        <conv:LogLineKindConverter x:Key="LogLineKindConverter"/>
+
+        <!-- Status text: gentle fade-in for key messages (start/complete/error).
+             Starting from 0.3 means the text never fully blacks out, so rapid
+             re-triggers during processing won't look like a strobe. -->
+        <Animation x:Key="StatusFadeIn"
+                   x:SetterTargetType="TextBlock"
+                   Duration="0:0:0.6"
+                   Easing="SineEaseOut"
+                   FillMode="Forward">
+            <KeyFrame Cue="0%">  <Setter Property="Opacity" Value="0.3"/> </KeyFrame>
+            <KeyFrame Cue="100%"><Setter Property="Opacity" Value="1.0"/> </KeyFrame>
+        </Animation>
+
+        <!-- Phase 2 banner: slide down with BackEaseOut so it overshoots slightly and snaps back.
+             TranslateTransform.Y requires a TranslateTransform pre-set on the target (Phase2Banner). -->
+        <Animation x:Key="BannerSlideIn"
+                   x:SetterTargetType="Border"
+                   Duration="0:0:0.45"
+                   Easing="BackEaseOut"
+                   FillMode="Forward">
+            <KeyFrame Cue="0%">
+                <Setter Property="Opacity"              Value="0.0"/>
+                <Setter Property="TranslateTransform.Y" Value="-24"/>
+            </KeyFrame>
+            <KeyFrame Cue="100%">
+                <Setter Property="Opacity"              Value="1.0"/>
+                <Setter Property="TranslateTransform.Y" Value="0"/>
+            </KeyFrame>
+        </Animation>
+
+        <!-- Checkmark bounce: invisible while banner slides in, then scales up past 100% and settles.
+             ScaleTransform must be pre-declared on the target (BannerCheckmark). -->
+        <Animation x:Key="CheckmarkBounce"
+                   x:SetterTargetType="TextBlock"
+                   Duration="0:0:0.65"
+                   FillMode="Forward">
+            <!-- Hold invisible while banner finishes sliding -->
+            <KeyFrame Cue="0%">
+                <Setter Property="ScaleTransform.ScaleX" Value="0"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0"/>
+                <Setter Property="Opacity"               Value="0"/>
+            </KeyFrame>
+            <KeyFrame Cue="30%">
+                <Setter Property="ScaleTransform.ScaleX" Value="0"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="0"/>
+                <Setter Property="Opacity"               Value="0"/>
+            </KeyFrame>
+            <!-- Overshoot to 1.3× -->
+            <KeyFrame Cue="70%">
+                <Setter Property="ScaleTransform.ScaleX" Value="1.3"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="1.3"/>
+                <Setter Property="Opacity"               Value="1"/>
+            </KeyFrame>
+            <!-- Settle to natural size -->
+            <KeyFrame Cue="100%">
+                <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                <Setter Property="Opacity"               Value="1"/>
+            </KeyFrame>
+        </Animation>
+
+        <!-- Completion: three slow breathing pulses that diminish — much softer than a sharp flash.
+             Total duration ~5 s (first breath strongest, each one slightly gentler). -->
+        <Animation x:Key="CompletionFlash"
+                   x:SetterTargetType="Border"
+                   Duration="0:0:5"
+                   Easing="SineEaseInOut"
+                   FillMode="Forward">
+            <KeyFrame Cue="0%">   <Setter Property="Opacity" Value="0.00"/></KeyFrame>
+            <KeyFrame Cue="12%">  <Setter Property="Opacity" Value="0.30"/></KeyFrame>
+            <KeyFrame Cue="26%">  <Setter Property="Opacity" Value="0.00"/></KeyFrame>
+            <KeyFrame Cue="42%">  <Setter Property="Opacity" Value="0.20"/></KeyFrame>
+            <KeyFrame Cue="56%">  <Setter Property="Opacity" Value="0.00"/></KeyFrame>
+            <KeyFrame Cue="70%">  <Setter Property="Opacity" Value="0.12"/></KeyFrame>
+            <KeyFrame Cue="100%"> <Setter Property="Opacity" Value="0.00"/></KeyFrame>
+        </Animation>
+    </Window.Resources>
+    
+    <Window.Styles>
+        <!-- Primary Button Style -->
+        <Style Selector="Button.Primary">
+            <Setter Property="Background" Value="{StaticResource ButtonPrimaryBgBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryDarkBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="16,6"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.Primary:pointerover">
+            <Setter Property="Background" Value="{StaticResource ButtonPrimaryHoverBrush}"/>
+        </Style>
+        <Style Selector="Button.Primary:disabled">
+            <Setter Property="Background" Value="{DynamicResource DisabledButtonBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource DisabledButtonForegroundBrush}"/>
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        
+        <!-- Secondary Button Style -->
+        <Style Selector="Button.Secondary">
+            <Setter Property="Background" Value="{DynamicResource NeutralBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource HeaderTitleBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,4"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="Button.Secondary:pointerover">
+            <Setter Property="Background" Value="{DynamicResource NeutralHoverBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="Button.DevTool">
+            <Setter Property="Background" Value="{DynamicResource PaneWellBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.DevTool:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource GoldEdgeBrush}"/>
+        </Style>
+        
+        <!-- Section Panel Style -->
+        <Style Selector="Border.Section">
+            <Setter Property="Background" Value="{DynamicResource SectionDiagonalBgBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="12,0,12,12"/>
+            <Setter Property="BoxShadow" Value="{DynamicResource CardShadow}"/>
+        </Style>
+        
+        <!-- Label Style -->
+        <Style Selector="TextBlock.Label">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="TextTrimming" Value="None"/>
+        </Style>
+        
+        <!-- Description Style — safe to wrap because it lives in the fixed-width left column. -->
+        <Style Selector="TextBlock.Description">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        
+        <!-- Tighter padding for stacked left-column panels -->
+        <Style Selector="Border.Section.ConfigSection">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+
+        <Style Selector="Border.ConfigSection ComboBox">
+            <Setter Property="MinHeight" Value="32"/>
+        </Style>
+        <Style Selector="Border.ConfigSection TextBox">
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="MinHeight" Value="32"/>
+        </Style>
+        <Style Selector="Border.ConfigSection AutoCompleteBox">
+            <Setter Property="MinHeight" Value="32"/>
+        </Style>
+        <Style Selector="Border.ConfigSection ToggleSwitch.OptionSwitch">
+            <Setter Property="Margin" Value="6,0,0,0"/>
+        </Style>
+        <Style Selector="Border.ConfigSection TextBlock.SectionHeader">
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Margin" Value="0,0,0,3"/>
+        </Style>
+
+        <!-- Section Header Style — dark forest in light mode, gold in dark -->
+        <Style Selector="TextBlock.SectionHeader">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{DynamicResource SectionHeaderForegroundBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+
+        <!-- Toggle options — premium switch rows for extraction settings -->
+        <Style Selector="ToggleSwitch">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="OnContent" Value=""/>
+            <Setter Property="OffContent" Value=""/>
+        </Style>
+        <Style Selector="ToggleSwitch:disabled">
+            <Setter Property="Opacity" Value="0.55"/>
+        </Style>
+        <Style Selector="ToggleSwitch.OptionSwitch">
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="10,0,0,0"/>
+        </Style>
+        <Style Selector="Grid.OptionRow">
+            <Setter Property="Margin" Value="0,0,0,1"/>
+            <Setter Property="MinHeight" Value="22"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Grid.OptionRow:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}"/>
+        </Style>
+        <Style Selector="Border.OptionGroup">
+            <Setter Property="Background" Value="{DynamicResource PaneWellBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}"/>
+            <Setter Property="Padding" Value="5,4"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+
+        <!-- First-run onboarding: glowing step callouts (first launch only) -->
+        <Style Selector="Border.FirstRunStepHint">
+            <Setter Property="Background" Value="#14D4A843"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource GoldEdgeBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Margin" Value="0,0,0,2"/>
+        </Style>
+        <Style Selector="Border.FirstRunStepHint.Active">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Style.Animations>
+                <Animation IterationCount="Infinite"
+                           PlaybackDirection="Alternate"
+                           Duration="0:0:1.35"
+                           Easing="SineEaseInOut">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0.68"/>
+                        <Setter Property="BoxShadow" Value="0 0 10 0 #30D4A843"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1"/>
+                        <Setter Property="BoxShadow" Value="0 0 22 0 #58D4A843, 0 0 36 0 #242E9A8E"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Border.FirstRunStepHint.Complete">
+            <Setter Property="Opacity" Value="0.58"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SuccessBrush}"/>
+            <Setter Property="Background" Value="#105DBE6E"/>
+        </Style>
+        <Style Selector="Border.FirstRunStepHint.Locked">
+            <Setter Property="Opacity" Value="0.34"/>
+        </Style>
+        <Style Selector="Border.FirstRunStepBadge">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border.FirstRunStepHint.Complete Border.FirstRunStepBadge">
+            <Setter Property="Background" Value="{DynamicResource SuccessBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.FirstRunStepBadgeText">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryDarkBrush}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBlock.FirstRunStepText">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Step 3: pulse the Extract button instead of a separate callout -->
+        <Style Selector="Button.Primary.FirstRunGlow">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Style.Animations>
+                <Animation IterationCount="Infinite"
+                           PlaybackDirection="Alternate"
+                           Duration="0:0:1.35"
+                           Easing="SineEaseInOut">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0.78"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <!-- AutoCompleteBox styling (game path / output path inputs) -->
+        <Style Selector="AutoCompleteBox">
+            <Setter Property="Background" Value="{DynamicResource InputSurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}"/>
+        </Style>
+        <Style Selector="AutoCompleteBox /template/ TextBox">
+            <Setter Property="Background" Value="{DynamicResource InputSurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="SelectionBrush" Value="{DynamicResource ListSelectedBrush}"/>
+        </Style>
+        <Style Selector="AutoCompleteBox:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource FocusBorderBrush}"/>
+        </Style>
+
+        <!-- Global TextBox styling -->
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="{DynamicResource InputSurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="SelectionBrush" Value="{DynamicResource ListSelectedBrush}"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}"/>
+        </Style>
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource FocusBorderBrush}"/>
+        </Style>
+
+        <!-- Global ComboBox styling -->
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource InputSurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}"/>
+            <Setter Property="MinHeight" Value="38"/>
+        </Style>
+        <Style Selector="ComboBox /template/ Border#Background">
+            <Setter Property="Background" Value="{DynamicResource InputSurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}"/>
+        </Style>
+        <Style Selector="ComboBox:focus /template/ Border#Background">
+            <Setter Property="BorderBrush" Value="{DynamicResource FocusBorderBrush}"/>
+        </Style>
+        <Style Selector="ComboBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="MinHeight" Value="34"/>
+        </Style>
+        <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ListHoverBrush}"/>
+        </Style>
+        <Style Selector="ComboBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ListSelectedBrush}"/>
+        </Style>
+
+        <!-- ContextMenu & MenuItem styling -->
+        <Style Selector="ContextMenu">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="MenuItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        </Style>
+        <Style Selector="MenuItem:pointerover /template/ Border#PART_LayoutRoot">
+            <Setter Property="Background" Value="{DynamicResource ListHoverBrush}"/>
+        </Style>
+
+        <Style Selector="ScrollViewer">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <!-- Tooltip styling -->
+        <Style Selector="ToolTip">
+            <Setter Property="Background" Value="{DynamicResource TooltipPanelBgBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontFamily" Value="{DynamicResource JetBrainsMonoFont}"/>
+        </Style>
+
+        <!-- Progress bar shimmer: a translucent stripe that sweeps left→right forever while processing.
+             Uses WPF-style TranslateTransform.X path — CSS-like strings are NOT supported in keyframe Setters. -->
+        <Style Selector="Border.shimmer">
+            <Style.Animations>
+                <Animation Duration="0:0:1.7" IterationCount="INFINITE" Easing="LinearEasing">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="TranslateTransform.X" Value="-150"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="TranslateTransform.X" Value="1300"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <!-- Premium: smooth state transitions — buttons ease between normal/hover/disabled instead of snapping -->
+
+        <!-- SectionGold: gold left accent on section panels (paired with .Section) -->
+        <Style Selector="Border.SectionGold">
+            <Setter Property="BorderBrush" Value="{DynamicResource SectionGoldBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <!-- Gold-thumb scrollbar: accent-coloured thumb on a subtle track (colors set via Fluent theme resource keys) -->
+    </Window.Styles>
+    
+    <DockPanel LastChildFill="True">
+        <!-- Header Bar -->
+        <Border DockPanel.Dock="Top"
+                Background="{DynamicResource HeaderChromeBrush}"
+                BorderBrush="{DynamicResource GoldLineBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="12,8">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel x:Name="DeveloperUnlockTarget"
+                            Grid.Column="0"
+                            Orientation="Horizontal"
+                            Spacing="10"
+                            VerticalAlignment="Center"
+                            Cursor="Hand"
+                            PointerPressed="DeveloperUnlockTarget_PointerPressed"
+                            ToolTip.Tip="{loc:Localize tooltips.developerUnlock}">
+                    <!-- App logo -->
+                    <Image Source="/Assets/app-icon.png"
+                           Width="40" Height="40"
+                           VerticalAlignment="Center"
+                           RenderOptions.BitmapInterpolationMode="HighQuality"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{loc:Localize app.title}"
+                                   FontSize="20" FontWeight="Bold"
+                                   Foreground="{DynamicResource HeaderTitleBrush}"/>
+                        <TextBlock Text="{loc:Localize app.subtitle}"
+                                   FontSize="11" Foreground="{DynamicResource HeaderSubtitleBrush}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="12">
+                    <!-- DEBUG badge — visible only when Verbose Logging is on -->
+                    <Border IsVisible="{Binding DebugMode}" Background="{DynamicResource AccentBrush}"
+                            CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
+                        <TextBlock Text="{loc:Localize labels.debugBadge}" FontSize="11" FontWeight="Bold" Foreground="White"/>
+                    </Border>
+                    <ComboBox x:Name="ThemeBox" ItemsSource="{Binding AvailableThemes}"
+                              SelectedItem="{Binding SelectedTheme}"
+                              Width="72" FontSize="12"
+                              ToolTip.Tip="{loc:Localize tooltips.theme}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock>
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource LocalizedDisplayConverter}" ConverterParameter="theme">
+                                            <Binding />
+                                            <Binding Path="LanguageVersion" Source="{x:Static loc:StringResourceManager.Instance}"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <ComboBox ItemsSource="{Binding AvailableUILanguages}"
+                              SelectedItem="{Binding SelectedUILanguage}"
+                              MinWidth="125" FontSize="12"
+                              ToolTip.Tip="{loc:Localize tooltips.uiLanguage}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Action Bar -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource ActionBarBrush}"
+                BorderBrush="{DynamicResource GoldLineBrush}" BorderThickness="0,0,0,1"
+                Padding="12,8">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                <Button Classes="Primary"
+                        Classes.FirstRunGlow="{Binding FirstRunStep3Active}"
+                        Content="{Binding ExtractButtonText}"
+                        Command="{Binding StartExtractionCommand}"
+                        IsEnabled="{Binding CanStartExtraction}"
+                        ToolTip.Tip="{loc:Localize tooltips.extract}"/>
+                <Button Classes="Secondary"
+                        Content="{loc:Localize buttons.cancel}"
+                        Command="{Binding CancelExtractionCommand}"
+                        IsEnabled="{Binding CanCancel}"
+                        ToolTip.Tip="{loc:Localize tooltips.cancel}"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- Side-by-side above ~900px; stacks vertically when narrow (see MainWindowLayoutHelper). -->
+        <Grid x:Name="MainContentGrid" ColumnSpacing="12" Margin="12,6,12,10" MinHeight="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.05*" MinWidth="380"/>
+                <ColumnDefinition Width="1.45*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border x:Name="ConfigColumn" Grid.Row="0" Grid.Column="0" Classes="Section SectionGold ConfigSection"
+                    VerticalAlignment="Top"
+                    HorizontalAlignment="Stretch"
+                    MinHeight="0"
+                    ToolTip.Tip="{Binding ExtractionOptionsToolTipText}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalAlignment="Top"
+                              Background="Transparent">
+                    <StackPanel Spacing="5" IsEnabled="{Binding !IsProcessing}">
+
+                        <!-- ── Game paths ── -->
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                            <TextBlock Grid.Column="0" Classes="SectionHeader" Margin="0"
+                                       VerticalAlignment="Center"
+                                       Text="{loc:Localize sections.gameConfig}"/>
+                            <Button Grid.Column="1" Classes="Secondary" VerticalAlignment="Center"
+                                    Content="{loc:Localize buttons.autoDetect}"
+                                    Command="{Binding DetectGamesCommand}"
+                                    ToolTip.Tip="{loc:Localize tooltips.autoDetect}"/>
+                        </Grid>
+
+                        <Border Classes="FirstRunStepHint"
+                                Classes.Active="{Binding FirstRunStep1Active}"
+                                Classes.Complete="{Binding FirstRunStep1Complete}"
+                                IsVisible="{Binding ShowFirstRunSteps}"
+                                ToolTip.Tip="{loc:Localize tooltips.autoDetect}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Border Classes="FirstRunStepBadge">
+                                    <TextBlock Classes="FirstRunStepBadgeText" Text="1"/>
+                                </Border>
+                                <TextBlock Classes="FirstRunStepText"
+                                           Text="{loc:Localize descriptions.firstRunStep1}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock IsVisible="{Binding HasDetectStatus}"
+                                   Text="{Binding DetectStatusText}"
+                                   Foreground="{DynamicResource AccentBrush}"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap"/>
+
+                        <Grid IsVisible="{Binding HasDetectedGames}"
+                              ColumnDefinitions="58,*" ColumnSpacing="6" Margin="0,0,0,2">
+                            <TextBlock Grid.Column="0" Classes="Label" Margin="0"
+                                       VerticalAlignment="Center"
+                                       Text="{loc:Localize labels.detectedInstallations}"/>
+                            <ComboBox x:Name="DetectedGamesBox" Grid.Column="1"
+                                      ItemsSource="{Binding DetectedGames}"
+                                      SelectedItem="{Binding SelectedDetectedGame}"
+                                      HorizontalAlignment="Stretch"
+                                      ToolTip.Tip="{loc:Localize tooltips.annoPath}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock>
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource LocalizedDisplayConverter}">
+                                                    <Binding Path="DisplayName"/>
+                                                    <Binding Path="LanguageVersion" Source="{x:Static loc:StringResourceManager.Instance}"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+
+                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="58,*,Auto" RowSpacing="3" ColumnSpacing="6">
+                        <TextBlock Classes="Label"
+                                   Grid.Row="0" Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="{loc:Localize labels.gameDirectory}"
+                                   ToolTip.Tip="{loc:Localize tooltips.annoPath}"/>
+                        <AutoCompleteBox x:Name="GamePathBox" Grid.Row="0" Grid.Column="1"
+                                         Text="{Binding GamePath, Mode=TwoWay}"
+                                         ItemsSource="{Binding RecentGamePaths}"
+                                         FilterMode="Contains"
+                                         MinimumPrefixLength="0"
+                                         ToolTip.Tip="{loc:Localize tooltips.annoPath}"/>
+                        <Button Grid.Row="0" Grid.Column="2" Classes="Secondary" Margin="6,0,0,0"
+                                Content="{loc:Localize buttons.browse}"
+                                Command="{Binding BrowseGamePathCommand}"
+                                ToolTip.Tip="{loc:Localize tooltips.browse}"/>
+
+                        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                                Classes="FirstRunStepHint"
+                                Classes.Active="{Binding FirstRunStep2Active}"
+                                Classes.Complete="{Binding FirstRunStep2Complete}"
+                                Classes.Locked="{Binding FirstRunStep2Locked}"
+                                IsVisible="{Binding ShowFirstRunSteps}"
+                                ToolTip.Tip="{loc:Localize tooltips.outputPath}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Border Classes="FirstRunStepBadge">
+                                    <TextBlock Classes="FirstRunStepBadgeText" Text="2"/>
+                                </Border>
+                                <TextBlock Classes="FirstRunStepText"
+                                           Text="{loc:Localize descriptions.firstRunStep2}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Classes="Label"
+                                   Grid.Row="2" Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="{loc:Localize labels.outputDirectory}"
+                                   ToolTip.Tip="{loc:Localize tooltips.outputPath}"/>
+                        <AutoCompleteBox x:Name="OutputPathBox" Grid.Row="2" Grid.Column="1"
+                                         Text="{Binding OutputPath, Mode=TwoWay}"
+                                         ItemsSource="{Binding RecentOutputPaths}"
+                                         FilterMode="Contains"
+                                         MinimumPrefixLength="0"
+                                         ToolTip.Tip="{loc:Localize tooltips.outputPath}"/>
+                        <Button Grid.Row="2" Grid.Column="2" Classes="Secondary" Margin="6,0,0,0"
+                                Content="{loc:Localize buttons.browse}"
+                                Command="{Binding BrowseOutputPathCommand}"
+                                ToolTip.Tip="{loc:Localize tooltips.browse}"/>
+                        </Grid>
+
+                        <Border Height="1" Margin="0,4" Background="{DynamicResource GoldLineBrush}" Opacity="0.45"/>
+
+                        <!-- ── Extraction scope (full width) ── -->
+                        <StackPanel IsEnabled="{Binding AreProcessingOptionsEnabled}" Spacing="3">
+                            <TextBlock Classes="SectionHeader"
+                                       Text="{loc:Localize sections.extractionScope}"/>
+
+                            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="58,*" RowSpacing="3" ColumnSpacing="6">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="Label" Margin="0"
+                                           VerticalAlignment="Center"
+                                           Text="{loc:Localize labels.language}"
+                                           ToolTip.Tip="{Binding GameLanguageToolTipText}"/>
+                                <ComboBox x:Name="GameLanguageBox" Grid.Row="0" Grid.Column="1"
+                                          ItemsSource="{Binding AvailableGameLanguages}"
+                                          SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
+                                          IsEnabled="{Binding IsGameLanguageSelectionEnabled}"
+                                          HorizontalAlignment="Stretch"
+                                          ToolTip.Tip="{Binding GameLanguageToolTipText}"
+                                          PlaceholderText="{loc:Localize labels.noLanguagesDetected}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock>
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{StaticResource LocalizedDisplayConverter}" ConverterParameter="gameLanguage">
+                                                        <Binding/>
+                                                        <Binding Path="LanguageVersion" Source="{x:Static loc:StringResourceManager.Instance}"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="Label" Margin="0"
+                                           VerticalAlignment="Center"
+                                           Text="{loc:Localize labels.singleGuid}"
+                                           ToolTip.Tip="{loc:Localize tooltips.singleGuid}"/>
+                                <TextBox Grid.Row="1" Grid.Column="1"
+                                         Text="{Binding SingleGuid}"
+                                         PlaceholderText="{loc:Localize placeholders.singleGuid}"
+                                         IsEnabled="{Binding CanUseSingleGuid}"
+                                         ToolTip.Tip="{loc:Localize tooltips.singleGuid}"/>
+                            </Grid>
+
+                            <TextBlock Text="{Binding SingleGuidStatusText}"
+                                       IsVisible="{Binding HasSingleGuidStatus}"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,0"/>
+
+                        </StackPanel>
+
+                        <!-- ── Toggles: reflow to one column when the config pane is narrow ── -->
+                        <Grid x:Name="ToggleOptionsGrid" ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8"
+                              IsEnabled="{Binding AreProcessingOptionsEnabled}">
+                            <Border x:Name="CoreProcessingGroup" Grid.Column="0" Classes="OptionGroup" MinWidth="0">
+                                <StackPanel>
+                                    <TextBlock Classes="SectionHeader" Margin="0,0,0,2"
+                                               Text="{loc:Localize sections.coreProcessing}"/>
+                                    <Grid Classes="OptionRow" ColumnDefinitions="*,Auto" ToolTip.Tip="{Binding CommentsToolTipText}">
+                                        <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="11.5"
+                                                   VerticalAlignment="Center" TextWrapping="Wrap"
+                                                   Text="{loc:Localize checkboxes.comments}"/>
+                                        <ToggleSwitch Grid.Column="1" Classes="OptionSwitch" IsChecked="{Binding AddComments}"/>
+                                    </Grid>
+                                    <Grid Classes="OptionRow" ColumnDefinitions="*,Auto" ToolTip.Tip="{Binding DependenciesToolTipText}">
+                                        <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="11.5"
+                                                   VerticalAlignment="Center" TextWrapping="Wrap"
+                                                   Text="{loc:Localize checkboxes.dependencies}"/>
+                                        <ToggleSwitch Grid.Column="1" Classes="OptionSwitch" IsChecked="{Binding FixDependencies}"/>
+                                    </Grid>
+                                    <Grid Classes="OptionRow" ColumnDefinitions="*,Auto" ToolTip.Tip="{Binding IncludeDefaultPropertiesToolTipText}">
+                                        <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="11.5"
+                                                   VerticalAlignment="Center" TextWrapping="Wrap"
+                                                   Text="{loc:Localize checkboxes.includeDefaultProperties}"/>
+                                        <ToggleSwitch Grid.Column="1" Classes="OptionSwitch" IsChecked="{Binding IncludeDefaultProperties}"/>
+                                    </Grid>
+                                    <Grid Classes="OptionRow" ColumnDefinitions="*,Auto"
+                                          IsVisible="{Binding DeveloperOptionsUnlocked}"
+                                          ToolTip.Tip="{Binding DebugModeToolTipText}">
+                                        <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="11.5"
+                                                   VerticalAlignment="Center" TextWrapping="Wrap"
+                                                   Text="{loc:Localize checkboxes.debugMode}"/>
+                                        <ToggleSwitch Grid.Column="1" Classes="OptionSwitch" IsChecked="{Binding DebugMode}"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border x:Name="OutputStructureGroup" Grid.Column="1" Classes="OptionGroup" MinWidth="0">
+                                <StackPanel>
+                                    <TextBlock Classes="SectionHeader" Margin="0,0,0,2"
+                                               Text="{loc:Localize sections.outputStructure}"/>
+                                    <Grid Classes="OptionRow" ColumnDefinitions="*,Auto" ToolTip.Tip="{Binding ModOpsWrapToolTipText}">
+                                        <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="11.5"
+                                                   VerticalAlignment="Center" TextWrapping="Wrap"
+                                                   Text="{loc:Localize checkboxes.modOpsWrap}"/>
+                                        <ToggleSwitch Grid.Column="1" Classes="OptionSwitch" IsChecked="{Binding ModOpsWrap}"/>
+                                    </Grid>
+                                    <Grid Classes="OptionRow" ColumnDefinitions="*,Auto" ToolTip.Tip="{Binding TemplateFoldersToolTipText}">
+                                        <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="11.5"
+                                                   VerticalAlignment="Center" TextWrapping="Wrap"
+                                                   Text="{loc:Localize checkboxes.templates}"/>
+                                        <ToggleSwitch Grid.Column="1" Classes="OptionSwitch"
+                                                      IsEnabled="{Binding AreBroadOutputOptionsEnabled}"
+                                                      IsChecked="{Binding CreateTemplateFolders}"/>
+                                    </Grid>
+                                    <Grid Classes="OptionRow" ColumnDefinitions="*,Auto" ToolTip.Tip="{Binding SplitTemplatesToolTipText}">
+                                        <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="11.5"
+                                                   VerticalAlignment="Center" TextWrapping="Wrap"
+                                                   Text="{loc:Localize checkboxes.splitTemplates}"/>
+                                        <ToggleSwitch Grid.Column="1" Classes="OptionSwitch"
+                                                      IsEnabled="{Binding AreBroadOutputOptionsEnabled}"
+                                                      IsChecked="{Binding SplitTemplates}"/>
+                                    </Grid>
+                                    <Grid Classes="OptionRow" ColumnDefinitions="*,Auto" ToolTip.Tip="{Binding CreateAssetModsToolTipText}">
+                                        <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="11.5"
+                                                   VerticalAlignment="Center" TextWrapping="Wrap"
+                                                   Text="{loc:Localize checkboxes.createAssetMods}"/>
+                                        <ToggleSwitch Grid.Column="1" Classes="OptionSwitch" IsChecked="{Binding CreateAssetMods}"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- ── Right column: Console Output (fill) + Status (bottom) ─ -->
+            <DockPanel x:Name="ConsoleColumn" Grid.Row="0" Grid.Column="1" LastChildFill="True"
+                       VerticalAlignment="Stretch" MinHeight="0">
+
+                <!-- Console Output section -->
+                <Border Classes="Section SectionGold" Margin="0" VerticalAlignment="Stretch" MinHeight="0">
+                    <DockPanel LastChildFill="True">
+                        <TextBlock DockPanel.Dock="Top" Classes="SectionHeader"
+                                   Text="{loc:Localize sections.console}"/>
+
+                        <Border DockPanel.Dock="Top"
+                                IsVisible="{Binding DeveloperOptionsUnlocked}"
+                                Background="{DynamicResource PaneWellBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource RadiusSm}"
+                                Padding="8"
+                                Margin="0,0,0,8">
+                            <DockPanel LastChildFill="False">
+                                <TextBlock DockPanel.Dock="Left"
+                                           Text="{loc:Localize developerTools.title}"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AccentBrush}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,10,0"/>
+                                <StackPanel DockPanel.Dock="Right"
+                                            Orientation="Horizontal"
+                                            Spacing="6"
+                                            HorizontalAlignment="Right">
+                                    <Button Classes="DevTool"
+                                            Content="{loc:Localize developerTools.copyReport}"
+                                            Click="CopyDeveloperReport_Click"
+                                            ToolTip.Tip="{loc:Localize developerTools.copyReportTip}"/>
+                                    <Button Classes="DevTool"
+                                            Content="{loc:Localize developerTools.openAnnoAssets}"
+                                            Command="{Binding OpenAnnoAssetsFolderCommand}"
+                                            ToolTip.Tip="{loc:Localize developerTools.openAnnoAssetsTip}"/>
+                                    <Button Classes="DevTool"
+                                            Content="{loc:Localize developerTools.clearConsole}"
+                                            Command="{Binding ClearLogCommand}"
+                                            ToolTip.Tip="{loc:Localize developerTools.clearConsoleTip}"/>
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- Status: idle line, or structured header (+ raw mirror in developer mode). -->
+                        <StackPanel DockPanel.Dock="Top"
+                                    Margin="0,0,0,8"
+                                    Spacing="4"
+                                    ToolTip.Tip="{loc:Localize tooltips.status}">
+                            <!-- Idle / initializing (before first progress line) -->
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="4"
+                                        IsVisible="{Binding ShowLegacyStatusLine}">
+                                <TextBlock FontWeight="SemiBold" FontSize="13"
+                                           FontFamily="{StaticResource JetBrainsMonoFont}"
+                                           Foreground="{DynamicResource AccentBrush}"
+                                           Text="{Binding SpinnerIcon}"
+                                           IsVisible="{Binding IsProcessing}"/>
+                                <TextBlock x:Name="StatusTextBlock"
+                                           FontWeight="SemiBold" FontSize="13"
+                                           FontFamily="{StaticResource JetBrainsMonoFont}"
+                                           Foreground="{Binding StatusIsError, Converter={StaticResource ErrorColorConverter}}"
+                                           Text="{Binding StatusText}"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock FontWeight="SemiBold" FontSize="13"
+                                           FontFamily="{StaticResource JetBrainsMonoFont}"
+                                           Foreground="{DynamicResource AccentBrush}"
+                                           Text="{Binding Ellipsis}"
+                                           IsVisible="{Binding IsProcessing}"/>
+                            </StackPanel>
+                            <!-- Structured: phase + color-coded asset (regular + developer) -->
+                            <StackPanel Spacing="3"
+                                        IsVisible="{Binding ShowStructuredRunStatus}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock FontWeight="SemiBold" FontSize="13"
+                                                   FontFamily="{StaticResource JetBrainsMonoFont}"
+                                                   Foreground="{DynamicResource AccentBrush}"
+                                                   Text="{Binding SpinnerIcon}"/>
+                                        <TextBlock FontWeight="Bold" FontSize="12"
+                                                   FontFamily="{StaticResource JetBrainsMonoFont}"
+                                                   Foreground="{DynamicResource PhaseTitleBrush}"
+                                                   Text="{Binding RunPhaseTitle}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                    <TextBlock FontSize="11" FontWeight="SemiBold"
+                                               FontFamily="{StaticResource JetBrainsMonoFont}"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center"
+                                               IsVisible="{Binding ShowDeveloperStepPercent}"
+                                               Text="{Binding RunStepPercentText}"/>
+                                </StackPanel>
+                                <TextBlock TextWrapping="Wrap"
+                                           FontFamily="{StaticResource JetBrainsMonoFont}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold">
+                                    <Run Text="{Binding RunStatusOperation}"
+                                         FontWeight="Bold"
+                                         Foreground="{Binding RunStatusOperation, Converter={StaticResource LogLineKindConverter}, ConverterParameter=ProgressOperation}"/>
+                                    <Run Text=" "/>
+                                    <Run Text="{Binding RunStatusGuid}"
+                                         Foreground="{Binding RunStatusGuid, Converter={StaticResource LogLineKindConverter}, ConverterParameter=ProgressGuid}"
+                                         FontWeight="SemiBold"/>
+                                    <Run Text="{Binding RunStatusGuidSeparator}"
+                                         Foreground="{Binding RunStatusGuidSeparator, Converter={StaticResource LogLineKindConverter}, ConverterParameter=ProgressSeparator}"/>
+                                    <Run Text="{Binding RunStatusAssetName}"
+                                         Foreground="{Binding RunStatusAssetName, Converter={StaticResource LogLineKindConverter}, ConverterParameter=ProgressAsset}"/>
+                                    <Run Text="{Binding RunStatusTemplate}"
+                                         Foreground="{Binding RunStatusTemplate, Converter={StaticResource LogLineKindConverter}, ConverterParameter=ProgressTemplate}"/>
+                                </TextBlock>
+                                <!-- Developer: full backend progress line (log stays complete below) -->
+                                <TextBlock Text="{Binding StatusText}"
+                                           IsVisible="{Binding ShowDeveloperRawStatusMirror}"
+                                           FontSize="11"
+                                           FontFamily="{StaticResource JetBrainsMonoFont}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap"
+                                           TextTrimming="CharacterEllipsis"
+                                           MaxHeight="36"
+                                           Opacity="0.9"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Progress row: rounded pill bar + percentage side by side.
+                             Percentage lives outside the bar so it is always readable. -->
+                        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,10" VerticalAlignment="Center">
+                            <!-- Rounded track that clips the fill, shimmer and breathing glow -->
+                            <Border Grid.Column="0"
+                                    Height="{DynamicResource ProgressBarHeight}"
+                                    CornerRadius="7"
+                                    Background="{DynamicResource ProgressTrackBrush}"
+                                    ClipToBounds="True"
+                                    VerticalAlignment="Center">
+                                <Grid ClipToBounds="True">
+                                    <ProgressBar Value="{Binding Progress}"
+                                                 Minimum="0" Maximum="100"
+                                                 Background="{DynamicResource ProgressTrackBrush}"
+                                                 Foreground="{Binding ProgressBarColor, Converter={StaticResource StringToBrushConverter}}"/>
+
+                                    <!-- Shimmer: translucent stripe sweeping left→right while processing -->
+                                    <Border Classes="shimmer"
+                                            Width="150"
+                                            HorizontalAlignment="Left"
+                                            IsHitTestVisible="False"
+                                            IsVisible="{Binding IsProcessing}">
+                                        <Border.RenderTransform>
+                                            <TranslateTransform X="-150"/>
+                                        </Border.RenderTransform>
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                                                <GradientStop Color="Transparent" Offset="0"/>
+                                                <GradientStop Color="#44D4A843"   Offset="0.3"/>
+                                                <GradientStop Color="#442E9A8E"   Offset="0.7"/>
+                                                <GradientStop Color="Transparent" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                    </Border>
+
+                                    <!-- Completion glow: soft teal overlay that breathes three times on finish -->
+                                    <Border x:Name="ProgressFlashOverlay"
+                                            Background="{DynamicResource AccentBrush}"
+                                            Opacity="0"
+                                            IsHitTestVisible="False"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Current-step counts + overall pipeline % -->
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        Spacing="10"
+                                        Margin="10,0,0,0"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="{Binding RunOperationCounts}"
+                                           IsVisible="{Binding ShowRunOperationCounts}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           FontFamily="{StaticResource JetBrainsMonoFont}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding ProgressText}"
+                                           FontSize="14" FontWeight="Bold"
+                                           FontFamily="{StaticResource JetBrainsMonoFont}"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center"
+                                           ToolTip.Tip="{loc:Localize tooltips.overallPipelineProgress}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Color-coded log — each LogLine gets its own colour via LogLineKindConverter.
+                             VirtualizingStackPanel renders only visible rows so 2 500-line logs stay fast.
+                             TextWrapping="NoWrap" is intentional: wrapping forces a full re-flow on every
+                             resize pixel, causing a layout freeze with large logs. -->
+                        <Border Background="{DynamicResource ConsoleWellBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource RadiusMd}"
+                                Padding="4"
+                                MinHeight="0"
+                                VerticalAlignment="Stretch"
+                                BoxShadow="{DynamicResource InsetPanelShadow}">
+                            <ListBox x:Name="LogListBox"
+                                     ItemsSource="{Binding LogLines}"
+                                     Background="{DynamicResource ConsolePanelBrush}"
+                                     BorderThickness="0"
+                                     Padding="4,4"
+                                     SelectionMode="Multiple"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     KeyDown="LogListBox_KeyDown"
+                                     PointerPressed="LogListBox_PointerPressed">
+                                <ListBox.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="{loc:Localize console.copySelected}" Click="CopySelected_Click"/>
+                                        <MenuItem Header="{loc:Localize console.copyAll}" Click="CopyAll_Click"/>
+                                    </ContextMenu>
+                                </ListBox.ContextMenu>
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel/>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.Styles>
+                                    <Style Selector="ListBoxItem">
+                                        <Setter Property="Padding" Value="8,1"/>
+                                        <Setter Property="MinHeight" Value="0"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                    </Style>
+                                    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                                        <Setter Property="Background" Value="{DynamicResource ListHoverBrush}"/>
+                                    </Style>
+                                    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                                        <Setter Property="Background" Value="{DynamicResource ListSelectedBrush}"/>
+                                    </Style>
+                                    <Style Selector="ListBoxItem:selected">
+                                        <Setter Property="BorderThickness" Value="2,0,0,0"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource GoldEdgeBrush}"/>
+                                    </Style>
+                                </ListBox.Styles>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:LogLine">
+                                        <Grid>
+                                            <TextBlock Text="{Binding DisplayText}"
+                                                       IsVisible="{Binding !IsStructuredProgress}"
+                                                       TextWrapping="NoWrap"
+                                                       Classes="ConsoleLog"
+                                                       FontFamily="{StaticResource JetBrainsMonoFont}"
+                                                       FontSize="{DynamicResource ConsoleLogFontSize}"
+                                                       Foreground="{Binding Kind, Converter={StaticResource LogLineKindConverter}}"/>
+                                            <TextBlock IsVisible="{Binding IsStructuredProgress}"
+                                                       TextWrapping="NoWrap"
+                                                       Classes="ConsoleLog"
+                                                       FontFamily="{StaticResource JetBrainsMonoFont}"
+                                                       FontSize="{DynamicResource ConsoleLogFontSize}">
+                                                <Run Text="{Binding ProgressMetrics}" Foreground="{Binding Kind, Converter={StaticResource LogLineKindConverter}, ConverterParameter=ProgressMetric}" FontWeight="SemiBold"/>
+                                                <Run Text=" - " Foreground="{Binding Kind, Converter={StaticResource LogLineKindConverter}, ConverterParameter=ProgressSeparator}"/>
+                                                <Run Text="{Binding ProgressOperation}" Foreground="{Binding Kind, Converter={StaticResource LogLineKindConverter}, ConverterParameter=ProgressOperation}" FontWeight="Bold"/>
+                                                <Run Text="{Binding ProgressAssetSeparator}"/>
+                                                <Run Text="{Binding ProgressGuid}" Foreground="{Binding Kind, Converter={StaticResource LogLineKindConverter}, ConverterParameter=ProgressGuid}" FontWeight="SemiBold"/>
+                                                <Run Text="{Binding ProgressGuidSeparator}" Foreground="{Binding Kind, Converter={StaticResource LogLineKindConverter}, ConverterParameter=ProgressSeparator}"/>
+                                                <Run Text="{Binding ProgressAssetName}" Foreground="{Binding Kind, Converter={StaticResource LogLineKindConverter}, ConverterParameter=ProgressAsset}" FontWeight="SemiBold"/>
+                                                <Run Text="{Binding ProgressTemplateDetail}" Foreground="{Binding Kind, Converter={StaticResource LogLineKindConverter}, ConverterParameter=ProgressTemplate}"/>
+                                            </TextBlock>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+                    </DockPanel>
+                </Border>
+
+            </DockPanel>
+
+        </Grid>
+    </DockPanel>
+</Window>
