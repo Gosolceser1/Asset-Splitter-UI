@@ -1,0 +1,60 @@
+{
+  "description": "AssetSplit application settings and default configurations",
+  "version": "1.0.0",
+  "last_updated": "2026-05-24",
+  "settings": {
+    "default_paths": {
+      "anno1800": "C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\games\\Anno 1800",
+      "anno117": "C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\games\\Anno 117 - Pax Romana - Demo"
+    },
+    "file_processing": {
+      "xml_extension": "*.xml",
+      "progress_interval": 100,
+      "max_console_output_lines": 2000,
+      "stream_buffer_size": 8192,
+      "processing_timeout_seconds": 300
+    },
+    "output_structure": {
+      "source_xml_folder": "source_xml",
+      "output_xml_folder": "output_xml",
+      "baseasset_folder": "BaseAssetGUID",
+      "test_extractions_folder": "AssetSplit_Output",
+      "modops_folder": "modops"
+    },
+    "fallback_behavior": {
+      "use_built_in_defaults": true,
+      "continue_on_missing_config": true,
+      "log_missing_config_warnings": true
+    },
+    "supported_languages": [
+      "english",
+      "french",
+      "german",
+      "italian",
+      "polish",
+      "spanish",
+      "russian",
+      "chinese",
+      "japanese",
+      "korean",
+      "taiwanese"
+    ],
+    "required_files": {
+      "anno1800": [
+        "assets.xml",
+        "properties.xml",
+        "templates.xml"
+      ],
+      "anno117": [
+        "assets.xml",
+        "properties.xml",
+        "templates.xml"
+      ]
+    },
+    "regional_processing": {
+      "anno1800_enabled": true,
+      "anno117_enabled": false,
+      "validate_regional_mappings": true
+    }
+  }
+}

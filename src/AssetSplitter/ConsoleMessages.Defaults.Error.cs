@@ -1,0 +1,80 @@
+namespace AssetProcessor;
+
+public static partial class ConsoleMessages
+{
+    private static void AddErrorDefaults(Dictionary<string, string> messages)
+    {
+        messages["permissionsError"] = "Please check permissions and disk space.";
+        messages["xmlFileNotFound"] = "XML file '{0}' not found.";
+        messages["errorLoadingDocuments"] = "Error: Could not load template or property documents";
+        messages["fixerErrorPrefix"] = "Fixer error";
+        messages["failedToLoadAssetNames"] = "Failed to load asset names: {0}";
+        messages["templateXmlNotFoundInPath"] = "[ERROR] Could not find templates.xml in {0}";
+        messages["templateXmlNotFound"] = "[ERROR] Could not find templates.xml";
+        messages["templateExtractionFailed"] = "[ERROR] Template extraction failed: {0}";
+        messages["templateParseFailed"] = "[ERROR] Failed to parse templates.xml: {0}";
+        messages["templateComparisonFailed"] = "[ERROR] Template comparison failed: {0}";
+        messages["templateWriteFailed"] = "[ERROR] Failed to write templates to file: {0}";
+        messages["templateUpdateFailed"] = "[ERROR] Failed to update templates";
+        messages["failedToLoadTemplatesFrom"] = "[ERROR] Failed to load templates from {0}: {1}";
+        messages["singleGuidNotFound"] = "[WARNING] GUID '{0}' not found in game assets. Check the GUID or run full extraction first.";
+        messages["extractAssetFailed"] = "[ERROR] Failed to extract asset {0}: {1}";
+        messages["audioGeneratedMissing"] = "[INFO] audio_generated.xml not found - skipping audio asset names";
+        messages["audioGeneratedLoadFailed"] = "[WARNING] Failed to load audio_generated.xml: {0}";
+        messages["templateSplitMissingTemplatesXml"] = "[SKIP] templates.xml not found - skipping template split";
+        messages["outputDirectoryCreateFailed"] = "[ERROR] Failed to create output directory '{0}': {1}";
+        messages["sourceXmlFolderPrepareFailed"] = "[ERROR] Could not prepare source_xml folder '{0}': {1}";
+        messages["modOutputFolderPrepareFailed"] = "[ERROR] Could not prepare mod output folder '{0}': {1}";
+        messages["outputFolderClearFailed"] = "[ERROR] Failed to clear output folder: {0}";
+        messages["gameDirectoryNotFound"] = "Game directory not found: {0}";
+        messages["failedToLoadXmlFile"] = "[ERROR] Failed to load XML file: {0}";
+        messages["unexpectedFileProcessingError"] = "[ERROR] Unexpected error processing file: {0}";
+        messages["formatSingleFileFailed"] = "FormatSingleFile failed for {0}: {1}";
+        messages["translationFileLoadFailed"] = "[ERROR] Failed to load translation file '{0}': {1}";
+        messages["textMetadataMissing"] = "[WARNING] Text metadata file not found: {0} (LineId dev names unavailable)";
+        messages["textMetadataLoadFailed"] = "[WARNING] Failed to load text metadata: {0}";
+        messages["lineIdContextLoadFailed"] = "[WARNING] Failed to build LineId context index: {0}";
+        messages["mergeAssetFailed"] = "[ERROR] Failed to merge {0}: {1}";
+        messages["templateNotFoundInCache"] = "[WARN] Template '{0}' not found in cache - this should not happen";
+        messages["assetsXmlDocumentElementLoadFailed"] = "[ERROR] Could not load assets.xml document element";
+        messages["autoUpdateFailed"] = "[WARN] Template auto-update failed: {0}";
+        messages["failedToLoadTemplates"] = "[ERROR] Failed to load templates: {0}";
+        messages["assetModsReadXmlWarning"] = "[WARN] Could not read asset XML '{0}': {1}";
+        messages["readmeShortFailNameNote"] = "Names containing Fail or Error are in-game UI assets, not extraction errors.";
+        messages["readmeSummaryWarning"] = "Do not copy this entire tree into the game mods folder. Copy individual mod folders only.";
+        messages["readmeCopyWarning"] = "Do not copy only `modinfo.json`, `README.md`, or the `data` folder. Keep the whole mod folder together.";
+        messages["modExportStagingFolderDeleteFailed"] = "[WARN] Could not remove intermediate XML folder {0}: {1}";
+        messages["whitelistLoadWarning"] = "Warning: Could not load whitelist {0}: {1}";
+        messages["issueParentNotFoundMessage"] = "Parent asset {0} was not found in the GUID file index.";
+        messages["issueParentNotFoundRootCause"] = "Dependency resolution could not locate the parent asset XML on disk because its GUID is missing from the index built after extraction.";
+        messages["issueParentNotFoundHint"] = "Parents must be indexed from the output root and the BaseAssetGUID staging folder before Phase 5 runs. Re-run with a current build if this persists after fixing the indexer.";
+        messages["issueParentLoadFailedMessage"] = "Parent asset {0} could not be loaded: {1}";
+        messages["issueParentLoadFailedRootCause"] = "The GUID index still pointed at a staging path after that parent was merged to the output root, or the file could not be read.";
+        messages["issueParentLoadFailedHint"] = "Check that the parent file is valid XML and not locked by another process.";
+        messages["issueDependencyChildLoadFailedMessage"] = "Dependency child asset '{0}' could not be loaded: {1}";
+        messages["issueDependencyChildLoadFailedRootCause"] = "A staged BaseAssetGUID child XML file could not be read before parent properties were merged into it.";
+        messages["issueDependencyChildLoadFailedHint"] = "Check that the child file is valid XML and not locked by another process.";
+        messages["issueExtractFailedRootCause"] = "Asset extraction failed while writing the ModOp/XML file for this GUID.";
+        messages["issueExtractFailedHint"] = "Check disk space, path length, and whether the asset node in assets.xml is valid.";
+        messages["issueMergeFailedRootCause"] = "Template property merge failed for this output file.";
+        messages["issueMergeFailedHint"] = "Inspect templates.xml/properties.xml and the asset template name for this file.";
+        messages["issueFormatFailedRootCause"] = "Final formatting failed while normalizing or annotating this XML file.";
+        messages["issueFormatFailedHint"] = "Open the file path listed in the sample and fix malformed XML or permissions.";
+        messages["issueTitle_ParentAssetLoadFailed"] = "Parent asset failed to load";
+        messages["issueTitle_DependencyChildLoadFailed"] = "Dependency child failed to load";
+        messages["issueTitle_ExtractAssetFailed"] = "Asset extraction failed";
+        messages["issueTitle_MergeAssetFailed"] = "Template merge failed";
+        messages["issueTitle_FormatFileFailed"] = "Formatting failed";
+        messages["issueTitle_UnexpectedFileProcessingError"] = "Unexpected formatting error";
+        messages["issueTitle_MoveToTemplateFolderFailed"] = "Template folder move failed";
+        messages["issueTitle_ModPackageReadXmlFailed"] = "Asset mod read failed";
+        messages["issueTitle_PipelineFatalError"] = "Pipeline error";
+        messages["runLockMissingOutputRoot"] = "[ERROR] Cannot acquire run lock: output root is not set.";
+        messages["runLockAcquireFailed"] = "[ERROR] Failed to acquire output run lock: {0}";
+        messages["runLockHeldByProcess"] = "[ERROR] Another Asset Splitter run is already using this output folder (PID {0}).";
+        messages["runLockStaleInvalid"] = "[WARN] Removing invalid stale run lock file.";
+        messages["runLockStaleTakeover"] = "[WARN] Taking over stale run lock from exited process (PID {0}).";
+        messages["issueModPrepareRootCause"] = "The mod output folder could not be prepared for writing.";
+        messages["issueModPrepareHint"] = "Check that the AnnoAssets path is writable, not cloud-locked, and free of reparse points.";
+    }
+}

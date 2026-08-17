@@ -1,0 +1,262 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace AssetProcessor;
+
+/// <summary>Writes grouped issue summaries to disk and the console (developer mode).</summary>
+public static class PipelineIssueReporter
+{
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
+
+    public static string? WriteSummary(PipelineContext context, bool runSucceeded)
+    {
+        IReadOnlyList<PipelineIssue> issues = context.Issues.GetAll();
+        if (issues.Count == 0)
+        {
+            // Always write a zero-count report so the UI never loads a prior run's issues_*.json.
+            return WriteEmptySummary(context, runSucceeded);
+        }
+
+        string rootPath = string.IsNullOrWhiteSpace(context.AnnoAssetsRoot) ? context.BaseOutputDir : context.AnnoAssetsRoot;
+        string? logsDir = OutputDirectoryManager.TryPrepareLogsDirectory(rootPath);
+        if (logsDir is null)
+        {
+            context.Log.Write(ConsoleMessageKind.Warning, $"[WARN] Could not create issue report folder under {rootPath}", always: true);
+            return null;
+        }
+
+        string reportPath = Path.Combine(logsDir, $"issues_{DateTime.Now:yyyyMMdd_HHmmss_fff}.json");
+        var report = BuildReport(issues, runSucceeded, reportPath);
+        if (!TryWriteReport(context, reportPath, report))
+        {
+            return null;
+        }
+
+        if (context.DebugMode && !Console.IsOutputRedirected)
+        {
+            WriteConsoleSummary(context, report);
+        }
+
+        Console.WriteLine($"[ISSUE_SUMMARY] {{\"reportPath\":{JsonSerializer.Serialize(reportPath)},\"errors\":{report.Counts.Errors},\"warnings\":{report.Counts.Warnings}}}");
+        return reportPath;
+    }
+
+    private static string? WriteEmptySummary(PipelineContext context, bool runSucceeded)
+    {
+        string rootPath = string.IsNullOrWhiteSpace(context.AnnoAssetsRoot) ? context.BaseOutputDir : context.AnnoAssetsRoot;
+        string? logsDir = OutputDirectoryManager.TryPrepareLogsDirectory(rootPath);
+        if (logsDir is null)
+        {
+            context.Log.Write(ConsoleMessageKind.Warning, $"[WARN] Could not create issue report folder under {rootPath}", always: true);
+            return null;
+        }
+
+        string reportPath = Path.Combine(logsDir, $"issues_{DateTime.Now:yyyyMMdd_HHmmss_fff}.json");
+        var report = new PipelineIssueReport
+        {
+            GeneratedAt = DateTime.Now.ToString("O"),
+            ReportPath = reportPath,
+            RunSucceeded = runSucceeded,
+            Counts = new PipelineIssueCounts(),
+            Groups = [],
+            Issues = [],
+        };
+        if (!TryWriteReport(context, reportPath, report))
+        {
+            return null;
+        }
+
+        if (context.DebugMode && !Console.IsOutputRedirected)
+        {
+            context.Log.WriteLocalized(ConsoleMessageKind.Summary, "issueSummaryNoneRecorded", always: true);
+        }
+
+        Console.WriteLine($"[ISSUE_SUMMARY] {{\"reportPath\":{JsonSerializer.Serialize(reportPath)},\"errors\":0,\"warnings\":0}}");
+        return reportPath;
+    }
+
+    private static bool TryWriteReport(PipelineContext context, string reportPath, object report)
+    {
+        try
+        {
+            File.WriteAllText(reportPath, JsonSerializer.Serialize(report, JsonOptions));
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or ArgumentException or NotSupportedException)
+        {
+            context.Log.Write(ConsoleMessageKind.Warning, $"[WARN] Could not write structured issue report '{reportPath}': {ex.Message}", always: true);
+            return false;
+        }
+    }
+
+    private static PipelineIssueReport BuildReport(IReadOnlyList<PipelineIssue> issues, bool runSucceeded, string reportPath)
+    {
+        var groups = issues
+            .GroupBy(i => i.Code, StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                PipelineIssue first = g.First();
+                return new PipelineIssueGroup
+                {
+                    Code = g.Key,
+                    Severity = g.Any(i => i.Severity == PipelineIssueSeverity.Error)
+                        ? nameof(PipelineIssueSeverity.Error)
+                        : nameof(PipelineIssueSeverity.Warning),
+                    Count = g.Count(),
+                    Message = first.Message,
+                    RootCause = first.RootCause,
+                    Hint = first.Hint,
+                    Phase = first.Phase?.ToString(),
+                    UniqueParentGuids = g.Select(i => i.ParentGuid).Where(p => !string.IsNullOrWhiteSpace(p)).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                    Samples = g.Take(12).Select(ToSample).ToList(),
+                };
+            })
+            .OrderByDescending(g => g.Severity == nameof(PipelineIssueSeverity.Error))
+            .ThenByDescending(g => g.Count)
+            .ThenBy(g => g.Code, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        int errors = issues.Count(i => i.Severity == PipelineIssueSeverity.Error);
+        int warnings = issues.Count - errors;
+
+        return new PipelineIssueReport
+        {
+            GeneratedAt = DateTime.Now.ToString("O"),
+            ReportPath = reportPath,
+            RunSucceeded = runSucceeded,
+            Counts = new PipelineIssueCounts { Total = issues.Count, Errors = errors, Warnings = warnings },
+            Groups = groups,
+            Issues = issues.Select(ToSample).ToList(),
+        };
+    }
+
+    private static PipelineIssueSample ToSample(PipelineIssue issue) =>
+        new()
+        {
+            Code = issue.Code,
+            Severity = issue.Severity.ToString(),
+            Message = issue.Message,
+            RootCause = issue.RootCause,
+            Hint = issue.Hint,
+            Phase = issue.Phase?.ToString(),
+            ChildGuid = issue.ChildGuid,
+            ChildDisplayName = issue.ChildDisplayName,
+            ParentGuid = issue.ParentGuid,
+            RelatedGuid = issue.RelatedGuid,
+            FilePath = issue.FilePath,
+            Detail = issue.Detail,
+        };
+
+    private static void WriteConsoleSummary(PipelineContext context, PipelineIssueReport report)
+    {
+        context.Log.WriteLocalized(ConsoleMessageKind.Summary, "issueSummaryHeader", always: true);
+        context.Log.WriteLocalized(ConsoleMessageKind.Summary, "issueSummaryCounts", always: true, report.Counts.Warnings, report.Counts.Errors);
+        context.Log.WriteLocalized(ConsoleMessageKind.Summary, "issueSummaryReportPath", always: true, report.ReportPath);
+        context.Log.Write(ConsoleMessageKind.Summary, "", always: true);
+
+        foreach (PipelineIssueGroup group in report.Groups)
+        {
+            string countLabel = group.Code == PipelineIssueCodes.ParentAssetNotInGuidIndex && group.UniqueParentGuids > 0
+                ? string.Format(ConsoleMessages.Get("issueSummaryGroupWithParents"), group.Count, group.UniqueParentGuids)
+                : group.Count.ToString();
+
+            context.Log.Write(group.Severity.ToUpperInvariant(),
+                string.Format(ConsoleMessages.Get("issueSummaryGroupLine"), group.Code, countLabel),
+                always: true);
+            context.Log.Write(ConsoleMessageKind.Info, "  " + ConsoleMessages.Get("issueSummaryRootCausePrefix") + group.RootCause, always: true);
+            if (!string.IsNullOrWhiteSpace(group.Hint))
+            {
+                context.Log.Write(ConsoleMessageKind.Info, "  " + ConsoleMessages.Get("issueSummaryHintPrefix") + group.Hint, always: true);
+            }
+
+            foreach (PipelineIssueSample sample in group.Samples.Take(5))
+            {
+                string line = FormatSampleLine(sample);
+                if (!string.IsNullOrEmpty(line))
+                {
+                    context.Log.Write(ConsoleMessageKind.Info, ConsoleMessages.Get("issueSummarySampleBulletPrefix") + line, always: true);
+                }
+            }
+
+            if (group.Count > 5)
+            {
+                context.Log.WriteLocalized(ConsoleMessageKind.Info, "issueSummaryMoreInReport", always: true, group.Count - 5);
+            }
+
+            context.Log.Write(ConsoleMessageKind.Summary, "", always: true);
+        }
+    }
+
+    private static string FormatSampleLine(PipelineIssueSample sample)
+    {
+        if (!string.IsNullOrWhiteSpace(sample.ChildDisplayName) && !string.IsNullOrWhiteSpace(sample.ParentGuid))
+        {
+            return string.Format(ConsoleMessages.Get("issueSummarySampleChildParent"), sample.ChildDisplayName, sample.ParentGuid);
+        }
+
+        if (!string.IsNullOrWhiteSpace(sample.ChildGuid))
+        {
+            return string.Format(ConsoleMessages.Get("issueSummarySampleGuid"), sample.ChildGuid, sample.Detail ?? sample.Message);
+        }
+
+        if (!string.IsNullOrWhiteSpace(sample.FilePath))
+        {
+            string name = Path.GetFileName(sample.FilePath);
+            return string.IsNullOrWhiteSpace(sample.Detail)
+                ? name
+                : string.Format(ConsoleMessages.Get("issueSummarySampleFileDetail"), name, sample.Detail);
+        }
+
+        return sample.Message;
+    }
+
+    private sealed class PipelineIssueReport
+    {
+        public string GeneratedAt { get; set; } = "";
+        public string ReportPath { get; set; } = "";
+        public bool RunSucceeded { get; set; }
+        public PipelineIssueCounts Counts { get; set; } = new();
+        public List<PipelineIssueGroup> Groups { get; set; } = [];
+        public List<PipelineIssueSample> Issues { get; set; } = [];
+    }
+
+    private sealed class PipelineIssueCounts
+    {
+        public int Total { get; set; }
+        public int Errors { get; set; }
+        public int Warnings { get; set; }
+    }
+
+    private sealed class PipelineIssueGroup
+    {
+        public string Code { get; set; } = "";
+        public string Severity { get; set; } = "";
+        public int Count { get; set; }
+        public string Message { get; set; } = "";
+        public string RootCause { get; set; } = "";
+        public string? Hint { get; set; }
+        public string? Phase { get; set; }
+        public int UniqueParentGuids { get; set; }
+        public List<PipelineIssueSample> Samples { get; set; } = [];
+    }
+
+    private sealed class PipelineIssueSample
+    {
+        public string Code { get; set; } = "";
+        public string Severity { get; set; } = "";
+        public string Message { get; set; } = "";
+        public string RootCause { get; set; } = "";
+        public string? Hint { get; set; }
+        public string? Phase { get; set; }
+        public string? ChildGuid { get; set; }
+        public string? ChildDisplayName { get; set; }
+        public string? ParentGuid { get; set; }
+        public string? RelatedGuid { get; set; }
+        public string? FilePath { get; set; }
+        public string? Detail { get; set; }
+    }
+}

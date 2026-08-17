@@ -1,0 +1,73 @@
+{
+  "description": "Regional ingredient mappings for Anno 1800 cost replacement system",
+  "version": "1.0",
+  "games": {
+    "anno1800": {
+      "africa": {
+        "ingredients": {
+          "description": "African regional building materials",
+          "ingredients": [
+            {
+              "guid": "114356",
+              "name": "Wanza Wood",
+              "description": "African regional wood material for construction"
+            },
+            {
+              "guid": "114402", 
+              "name": "Mud Bricks",
+              "description": "African regional building material, alternative to standard bricks"
+            }
+          ]
+        }
+      },
+      "default": {
+        "ingredients": {
+          "description": "Default regional building materials",
+          "ingredients": [
+            {
+              "guid": "1010196",
+              "name": "Timber", 
+              "description": "Wood material for construction"
+            },
+            {
+              "guid": "1010205",
+              "name": "Bricks",
+              "description": "Building material for construction" 
+            },
+            {
+              "guid": "1010202",
+              "name": "Concrete",
+              "description": "Advanced building material"
+            }
+          ]
+        }
+      },
+      "universal": {
+        "ingredients": {
+          "description": "Universal materials used across all regions",
+          "ingredients": [
+            {
+              "guid": "1010017",
+              "name": "Money",
+              "description": "Universal currency"
+            },
+            {
+              "guid": "1010207", 
+              "name": "Windows",
+              "description": "Building component"
+            },
+            {
+              "guid": "1010218",
+              "name": "Beams", 
+              "description": "Structural building component"
+            }
+          ]
+        }
+      }
+    },
+    "anno117": {
+      "enabled": false,
+      "description": "Regional ingredient replacement disabled for Anno 117 - Pax Romana (game-appropriate)"
+    }
+  }
+}
