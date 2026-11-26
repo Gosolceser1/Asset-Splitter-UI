@@ -93,7 +93,8 @@ public partial class MainWindow : Window
         }
 
         e.Handled = true;
-        _ = CopyConsoleToClipboard(selectedOnly: true);
+        // Same error handling as the context menu (status message on failure).
+        CopySelected_Click(sender, e);
     }
 
     /// <summary>Clears log selection when clicking on empty area (not on a list item).</summary>
@@ -122,8 +123,14 @@ public partial class MainWindow : Window
         }
 
         string text;
-        if (selectedOnly && LogListBox.SelectedItems is { Count: > 0 } selectedItems)
+        if (selectedOnly)
         {
+            // "Copy selected" with nothing selected must not silently copy the entire log.
+            if (LogListBox.SelectedItems is not { Count: > 0 } selectedItems)
+            {
+                return;
+            }
+
             var lines = selectedItems
               .OfType<ViewModels.LogLine>()
               .Select(l => l.Text);
@@ -143,13 +150,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        try
-        {
-            await clipboard.SetTextAsync(text);
-        }
-        catch
-        {
-            // Ignore clipboard errors (e.g. another app has it open)
-        }
+        // Let failures (e.g. another app holds the clipboard) reach the callers, which show
+        // the clipboardCopyFailed status instead of silently doing nothing.
+        await clipboard.SetTextAsync(text);
     }
 }

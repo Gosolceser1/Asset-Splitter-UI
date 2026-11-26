@@ -31,6 +31,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     /// saved under this owner, not the new path. Empty until the first switch or run.
     /// </summary>
     private string _consoleOwnerGamePath = "";
+
+    /// <summary>UTC start of the current/last run; older issue reports are not shown as its result.</summary>
+    private DateTime? _lastRunStartedUtc;
+
+    /// <summary>Sink registered as <see cref="UILogger.VisibleLog"/>; cleared again on dispose.</summary>
+    private readonly Action<string> _visibleLogSink;
     private readonly SettingsCoordinator _settingsCoordinator;
     private readonly BusyIndicatorAnimator _busyAnimator;
     private readonly LocalizedTextState _statusTextState;
@@ -323,6 +329,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _extractionCoordinator = new ExtractionCoordinator();
         _settingsCoordinator = new SettingsCoordinator(new AppSettingsStore(platformServices));
         _logStore = new MainWindowLogStore(() => LogVersion++);
+        // UILogger.Warning/Error are documented as "visible to the user" but nothing ever set the
+        // sink, so settings-save failures, detection failures etc. were silently dropped.
+        _visibleLogSink = OnUILoggerVisibleMessage;
+        UILogger.VisibleLog = _visibleLogSink;
         _busyAnimator = new BusyIndicatorAnimator((spinner, ellipsis) =>
         {
             SpinnerIcon = spinner;
@@ -381,7 +391,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
     private void OnStringResourceManagerPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is not (null or nameof(StringResourceManager.LanguageVersion)))
+        // The manager raises both "LanguageVersion" and a null "all properties" notification per
+        // language change; react to one of them only, or every keyed log line is rebuilt twice.
+        if (e.PropertyName is not nameof(StringResourceManager.LanguageVersion))
         {
             return;
         }
@@ -389,6 +401,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         // Covers language changes triggered from anywhere (not only SelectedUILanguage setter).
         OnPropertyChanged(nameof(ExtractButtonText));
         OnPropertyChanged(nameof(GameLanguageToolTipText));
+        OnPropertyChanged(nameof(ExtractionOptionsToolTipText));
         NotifyProcessingTooltipsChanged();
         RefreshDetectStatusText();
         RefreshSingleGuidStatusText();

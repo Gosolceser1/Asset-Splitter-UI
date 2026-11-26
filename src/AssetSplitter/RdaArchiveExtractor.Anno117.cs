@@ -65,11 +65,11 @@ public static partial class RdaArchiveExtractor
 
         if (!context.DebugMode)
         {
-            BackendI18nLine.Write("rdaExtractionCompleteShort", processed, total, sw.Elapsed.ToString(@"mm\:ss"));
+            BackendI18nLine.Write("rdaExtractionCompleteShort", processed, total, PipelineRunSupport.FormatElapsed(sw.Elapsed));
         }
         else
         {
-            context.Log.Debug(string.Format(ConsoleMessages.Get("debugRdaFinishedPhase"), $"Anno 117 ({sw.Elapsed:mm\\:ss})"));
+            context.Log.Debug(string.Format(ConsoleMessages.Get("debugRdaFinishedPhase"), $"Anno 117 ({PipelineRunSupport.FormatElapsed(sw.Elapsed)})"));
         }
     }
 }

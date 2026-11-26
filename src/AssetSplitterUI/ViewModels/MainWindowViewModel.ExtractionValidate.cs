@@ -64,6 +64,8 @@ public partial class MainWindowViewModel
         try
         {
             _consoleOwnerGamePath = GamePath;
+            // Small margin for file-system timestamp granularity.
+            _lastRunStartedUtc = DateTime.UtcNow.AddSeconds(-2);
             Progress = 0;
             IsComplete = false;
             ResetRunStatus();
@@ -101,7 +103,7 @@ public partial class MainWindowViewModel
 
             if (DebugMode)
             {
-                _logStore.AppendRaw("  AssetProcessor.exe " + BuildBackendArgs(GamePath, annoAssetsPath, language, effectiveConfig.SingleGuid));
+                _logStore.AppendRaw("  AssetProcessor.exe " + FormatEffectiveBackendArgs(effectiveConfig, annoAssetsPath));
             }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)

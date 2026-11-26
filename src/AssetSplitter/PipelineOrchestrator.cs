@@ -310,11 +310,11 @@ public static class PipelineOrchestrator
 
             if (context.DebugMode)
             {
-                context.Log.Debug(string.Format(ConsoleMessages.Get("debugGuidIndexComplete"), guidSw.Elapsed.ToString(@"mm\:ss"), context.GuidIndex?.Count.ToString("N0") ?? "0"));
+                context.Log.Debug(string.Format(ConsoleMessages.Get("debugGuidIndexComplete"), PipelineRunSupport.FormatElapsed(guidSw.Elapsed), context.GuidIndex?.Count.ToString("N0") ?? "0"));
             }
             else
             {
-                BackendI18nLine.Write("guidIndexComplete", guidSw.Elapsed.ToString(@"mm\:ss"));
+                BackendI18nLine.Write("guidIndexComplete", PipelineRunSupport.FormatElapsed(guidSw.Elapsed));
             }
         }
         else

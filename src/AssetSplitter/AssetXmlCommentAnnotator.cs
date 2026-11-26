@@ -143,7 +143,7 @@ internal static class AssetXmlCommentAnnotator
             string commentText = !string.IsNullOrWhiteSpace(translatedName)
                 ? $" Inherits: {firstPropertyName} {propertyGuid} {translatedName} "
                 : $" Inherits: {firstPropertyName} {propertyGuid} ";
-            string cleanedComment = commentText.Replace("--", "-").Trim();
+            string cleanedComment = AssetTextSanitizer.ToSafeXmlCommentBody(commentText);
             XmlComment inheritComment = xmlDoc.CreateComment(cleanedComment);
             if (element.ParentNode is not null)
             {

@@ -1182,7 +1182,7 @@ internal static partial class OutputRunCache
                 BuildFingerprint = buildFingerprint,
                 OptionsFingerprint = BuildOptionsFingerprint(context),
                 BuildDisplay = context.DetectedGameBuild.ToDisplayString(),
-                CompletedUtc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                CompletedUtc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture),
             };
             StampTreeHashMaps treeMaps = PopulateStampTreeFingerprints(context, gameType, stamp);
 
@@ -1201,10 +1201,12 @@ internal static partial class OutputRunCache
             stamp.ModCount = modCount;
 
             _ = Directory.CreateDirectory(context.GameOutputRoot);
+            // Inventory first, stamp last, each written atomically: a crash mid-write can no longer
+            // leave truncated JSON (which read as missing and forced a Full rebuild).
             WriteInventory(context.GameOutputRoot, inventory);
 
             string json = JsonSerializer.Serialize(stamp, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(Path.Combine(context.GameOutputRoot, StampFileName), json + Environment.NewLine);
+            AssetProcessorFileSystem.WriteAllTextAtomic(Path.Combine(context.GameOutputRoot, StampFileName), json + Environment.NewLine);
 
             log?.WriteLocalized(
                 ConsoleMessageKind.Cache,
@@ -1528,11 +1530,13 @@ internal static partial class OutputRunCache
     private static void WriteInventory(string gameOutputRoot, List<InventoryEntry> inventory)
     {
         string path = Path.Combine(gameOutputRoot, InventoryFileName);
-        using var writer = new StreamWriter(path, append: false);
+        var text = new StringBuilder();
         foreach (InventoryEntry entry in inventory.OrderBy(static e => e.Guid, StringComparer.OrdinalIgnoreCase))
         {
-            writer.WriteLine(JsonSerializer.Serialize(entry));
+            text.AppendLine(JsonSerializer.Serialize(entry));
         }
+
+        AssetProcessorFileSystem.WriteAllTextAtomic(path, text.ToString());
     }
 
     private static bool TryReadStamp(string gameOutputRoot, out StampDocument? stamp)

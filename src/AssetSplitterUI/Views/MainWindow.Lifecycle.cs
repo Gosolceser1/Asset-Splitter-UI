@@ -21,7 +21,7 @@ public partial class MainWindow : Window
 
     private void StringResourceManager_PropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
-        if (args.PropertyName is not ("LanguageVersion" or null))
+        if (args.PropertyName is not "LanguageVersion")
         {
             return;
         }

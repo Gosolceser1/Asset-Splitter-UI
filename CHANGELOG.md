@@ -18,6 +18,19 @@ All notable changes to Asset Splitter UI are documented here.
 - **UI startup**: no longer crashes on every launch on small or high-DPI screens (work area smaller than the minimum window size).
 - **UI settings**: a briefly locked `settings.json` is no longer overwritten with first-run defaults; a corrupt file is kept as `settings.json.bad`; saves are flushed to disk before replacing the file.
 - **RDAExtract**: without `-n`, newer `dataN.rda` patch files now win over older archives.
+- **Repair runs**: with `-f`, merged child assets are formatted again (comments, cleanup, template folders); with `-t`, parents in template folders are found.
+- **Phase 6**: one bad file no longer aborts dependency resolution.
+- **RDA**: extracted files are written atomically; unreadable archives or memory-resident blocks are reported (`RdaExtractionFailed`) instead of silently falling back to older archives; one bad timestamp no longer makes an archive unreadable; a trailing `;` in a filter no longer extracts everything.
+- **Build detection**: install paths with a trailing separator resolve correctly; build ids cut at a scan-chunk boundary are no longer accepted.
+- **Formatting**: `-t -c` no longer drops InheritedIndex comments at random; XML comments with `---` or a trailing `-` no longer fail to save; Africa cost slots no longer duplicate Mud Bricks.
+- **CLI**: `-g` without a GUID is an error; `-u` / `-x` file names are also looked up in `config/` and warn when missing.
+- **Run lock**: held as an exclusive OS handle for the whole run (no stale-takeover race, no PID-reuse lockout).
+- **Cleanup**: a junction above the output folder no longer blocks every delete; single-GUID mod-export-only runs keep earlier single-GUID outputs; a direct-source run pointed at its own `source_xml` no longer deletes it.
+- **Cache**: stamp/inventory files are written atomically; a briefly locked file no longer forces a full rebuild; timestamps are culture-independent.
+- **Timing**: runs over an hour report `h:mm:ss` instead of wrapping.
+- **Readmes**: per-mod README and MODDING-GUIDE use `--readme-lang`; `taiwanese` is recognised; message tables are cached.
+- **Cancel**: the backend gets a few seconds to stop cleanly before it is killed.
+- **UI**: detected-games picker shows for folders with several games; console logs stay with the right game; theme changes keep translated log text; Steam libraries from `libraryfolders.vdf` are detected; Anno 117 Demo is recognised from registry paths; saved paths on offline drives are kept; migrated options survive the first close; the saved game language is not wiped; setup errors no longer leave the app stuck busy; final output lines are no longer lost; warnings meant for the user are shown in the log; an old issue report is not shown for a run that wrote none; "Copy selected" with no selection copies nothing and copy failures are reported; a window closed while minimized reopens normally; unknown game languages show their name instead of a key; tooltips and the Phase 1 status follow UI language changes.
 
 ---
 

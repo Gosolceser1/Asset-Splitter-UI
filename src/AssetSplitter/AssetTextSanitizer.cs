@@ -66,6 +66,22 @@ internal static class AssetTextSanitizer
         return safeValue is "." or ".." ? "_" : safeValue;
     }
 
+    /// <summary>
+    /// Makes <paramref name="text"/> valid XML comment content: no "--" anywhere (a single
+    /// Replace turned "---" into "--") and no trailing "-" (which would form "-->" early).
+    /// </summary>
+    public static string ToSafeXmlCommentBody(string text)
+    {
+        string value = text;
+        while (value.Contains("--", StringComparison.Ordinal))
+        {
+            value = value.Replace("--", "-", StringComparison.Ordinal);
+        }
+
+        value = value.Trim();
+        return value.EndsWith('-') ? value + " " : value;
+    }
+
     public static string? ToXmlCommentText(string translatedValue)
     {
         StringBuilder builder = new(translatedValue, translatedValue.Length + 10);

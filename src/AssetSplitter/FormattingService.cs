@@ -6,9 +6,10 @@ namespace AssetProcessor;
 public static class FormattingService
 {
     private const string GoldCoinGuid = "1010017";
-    private const string TimberGuid = "1010207";
-    private const string PlanksGuid = "1010218";
-    private static readonly string[] BaseCostGuids = [GoldCoinGuid, TimberGuid, PlanksGuid];
+    // Names match config/03_Regional_Ingredients ("universal"): 1010207 = Windows, 1010218 = Beams.
+    private const string WindowsGuid = "1010207";
+    private const string BeamsGuid = "1010218";
+    private static readonly string[] BaseCostGuids = [GoldCoinGuid, WindowsGuid, BeamsGuid];
 
     private readonly record struct FormatFileContext(
         PipelineContext Context,

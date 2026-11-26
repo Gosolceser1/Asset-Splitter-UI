@@ -13,7 +13,9 @@ internal static partial class ModReadmeWriter
             ? "data/base/config/export/assets.xml"
             : "data/config/export/main/asset/assets.xml";
         string assetLang = NormalizeAssetLanguage(context.AssetLanguage);
-        Func<string, string> t = key => ConsoleMessages.GetForLanguage(key, assetLang);
+        // Guide text follows --readme-lang; the "extraction language" fact stays the game language.
+        string readmeLang = NormalizeAssetLanguage(context.ReadmeLanguage);
+        Func<string, string> t = key => ConsoleMessages.GetForLanguage(key, readmeLang);
         string extractionLanguage = GetAnnoLanguageKey(assetLang);
         string[] gameSpecificLines = isAnno117
             ? [t("readmeAnno117Install"), t("readmeAnno117Modinfo"), t("readmeAnno117GameSetup"), t("readmeAnno117AssetsPath"), t("readmeAnno117ShortModOps"), t("readmeAnno117LegacyModOps"), t("readmeAnno117Profile"), t("readmeAnno117FolderDisable"), t("readmeAnno117EnableNew"), t("readmeAnno117Deps"), t("readmeAnno117Log"), t("readmeAnno117HotReload")]

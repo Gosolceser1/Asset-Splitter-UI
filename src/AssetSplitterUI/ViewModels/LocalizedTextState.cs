@@ -52,7 +52,13 @@ internal sealed class LocalizedTextState(Action<string> applyText, Action? notif
 
         try
         {
-            return string.Format(template, args);
+            // Resolve nested localized arguments at display time so they follow UI language changes.
+            object[] resolvedArgs = args
+                .Select(arg => arg is AssetSplitterUI.Services.LocalizedConsoleArgument localized
+                    ? AssetSplitterUI.Services.ConsoleOutputLocalizer.ResolveLocalized(localized.Key, localized.Args)
+                    : arg)
+                .ToArray();
+            return string.Format(template, resolvedArgs);
         }
         catch (FormatException)
         {

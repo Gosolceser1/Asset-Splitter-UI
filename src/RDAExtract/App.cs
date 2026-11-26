@@ -59,8 +59,9 @@ internal sealed class App
         }
 
         DirectoryInfo dirInfo = new(sourcePath);
-        FileInfo[] dataSeries = dirInfo.GetFiles("data*.rda");
-        FileInfo[] allRdas = dirInfo.GetFiles("*.rda");
+        // Exclude our own progress file (.watch.rda) when outDir is (or was) the source folder.
+        FileInfo[] dataSeries = [.. dirInfo.GetFiles("data*.rda").Where(f => !IsWatchFile(f))];
+        FileInfo[] allRdas = [.. dirInfo.GetFiles("*.rda").Where(f => !IsWatchFile(f))];
 
         if (dataSeries.Length > 0)
         {
@@ -145,6 +146,9 @@ internal sealed class App
         Console.WriteLine("");
     }
 
+    private static bool IsWatchFile(FileInfo file) =>
+        file.Name.Equals(".watch.rda", StringComparison.OrdinalIgnoreCase);
+
     private static void ProcessSingleRda(
         string rdaFilePath,
         string outDir,
@@ -152,6 +156,25 @@ internal sealed class App
         bool bare,
         bool listOnly,
         bool skipExistingBareOutput = false)
+    {
+        try
+        {
+            ProcessSingleRdaCore(rdaFilePath, outDir, match, bare, listOnly, skipExistingBareOutput);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException or UnauthorizedAccessException or NotSupportedException)
+        {
+            // One unreadable archive must not abort the whole folder run.
+            Console.WriteLine($"\nERROR:\nCould not process {rdaFilePath}: {ex.Message}");
+        }
+    }
+
+    private static void ProcessSingleRdaCore(
+        string rdaFilePath,
+        string outDir,
+        string match,
+        bool bare,
+        bool listOnly,
+        bool skipExistingBareOutput)
     {
         if (listOnly)
         {

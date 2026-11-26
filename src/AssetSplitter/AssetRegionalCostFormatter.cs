@@ -87,8 +87,14 @@ internal static class AssetRegionalCostFormatter
                 primaryIngredients = fallbackIngredients;
             }
 
-            int arrayIndex = Math.Min(index - 1, primaryIngredients.Length - 1);
-            ingredient.InnerText = primaryIngredients[arrayIndex];
+            // Do not repeat the last ingredient for slots beyond the regional list (the Africa list
+            // is one shorter, so slot 6 used to get Mud Bricks a second time).
+            if (index - 1 >= primaryIngredients.Length)
+            {
+                continue;
+            }
+
+            ingredient.InnerText = primaryIngredients[index - 1];
 
             XmlNode? existing = costItem.SelectSingleNode("Ingredient");
             if (existing != null && !string.IsNullOrWhiteSpace(existing.InnerText))

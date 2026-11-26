@@ -304,11 +304,16 @@ internal static class SourceXmlCache
                 ContentTreeHash = DirectoryTreeFingerprint.DigestFromFileHashes(fileHashes),
                 FileHashes = fileHashes,
                 Display = detectedBuild.ToDisplayString(),
-                ExtractedUtc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                ExtractedUtc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture),
             };
 
             string json = JsonSerializer.Serialize(stamp, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(Path.Combine(sourceXmlPath, StampFileName), json + Environment.NewLine);
+            // Temp file in the parent folder: source_xml itself is fingerprinted.
+            string trimmedSourceXmlPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(sourceXmlPath));
+            AssetProcessorFileSystem.WriteAllTextAtomic(
+                Path.Combine(trimmedSourceXmlPath, StampFileName),
+                json + Environment.NewLine,
+                Path.GetDirectoryName(trimmedSourceXmlPath));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
         {

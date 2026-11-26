@@ -6,7 +6,9 @@ public static class ArchivePathSanitizer
     {
         "CON", "PRN", "AUX", "NUL",
         "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+        "CONIN$", "CONOUT$",
+        "COM¹", "COM²", "COM³", "LPT¹", "LPT²", "LPT³"
     };
 
     public static bool TryGetOutputPath(string fileName, string folder, out string outputPath)
@@ -137,7 +139,8 @@ public static class ArchivePathSanitizer
 
     private static bool IsReservedWindowsFileName(string segment)
     {
-        string baseName = segment.Split('.')[0];
+        // Windows ignores trailing spaces before the extension: "CON .txt" is still the CON device.
+        string baseName = segment.Split('.')[0].TrimEnd(' ');
         return ReservedWindowsFileNames.Contains(baseName);
     }
 }

@@ -131,6 +131,22 @@ public static class WindowPlacementHelper
             };
         }
 
+        if (window.WindowState == WindowState.Minimized)
+        {
+            // A minimized window reports a parked position (e.g. -32000,-32000 on Windows); saving it
+            // put the window in a corner of the primary monitor on the next launch. Keep the size
+            // and let the next launch use the default placement.
+            return new WindowPlacementSettings
+            {
+                SavedX = WindowPlacementSettings.UnsetCoordinate,
+                SavedY = WindowPlacementSettings.UnsetCoordinate,
+                SavedWidth = window.Width,
+                SavedHeight = window.Height,
+                SavedDisplayName = displayName,
+                StartMaximized = false
+            };
+        }
+
         return new WindowPlacementSettings
         {
             SavedX = window.Position.X,

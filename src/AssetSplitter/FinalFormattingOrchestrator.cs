@@ -111,7 +111,7 @@ public static class FinalFormattingOrchestrator
             if (totalSw is not null)
             {
                 // Read elapsed while the stopwatch is still running so formatting + stamp time is included.
-                BackendI18nLine.Write("totalTimeSummary", totalSw.Elapsed.ToString(@"mm\:ss"));
+                BackendI18nLine.Write("totalTimeSummary", PipelineRunSupport.FormatElapsed(totalSw.Elapsed));
                 if (totalSw.IsRunning)
                 {
                     totalSw.Stop();

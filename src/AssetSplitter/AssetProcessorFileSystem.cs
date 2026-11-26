@@ -14,6 +14,43 @@ internal static class AssetProcessorFileSystem
         return Path.Combine(context.SourceXmlFolder, fileName);
     }
 
+    /// <summary>
+    /// Writes <paramref name="content"/> (UTF-8, no BOM) to a temp file and renames it over
+    /// <paramref name="path"/>, so a crash or kill mid-write never leaves a truncated file behind.
+    /// The temp file is created in <paramref name="tempDirectory"/> (same volume) when given, e.g. to
+    /// keep it out of a directory whose contents are fingerprinted.
+    /// </summary>
+    public static void WriteAllTextAtomic(string path, string content, string? tempDirectory = null)
+    {
+        string directory = tempDirectory ?? Path.GetDirectoryName(Path.GetFullPath(path)) ?? ".";
+        string tempPath = Path.Combine(directory, "." + Path.GetFileName(path) + "." + Guid.NewGuid().ToString("N") + ".tmp");
+        try
+        {
+            using (var stream = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            using (var writer = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)))
+            {
+                writer.Write(content);
+                writer.Flush();
+                stream.Flush(flushToDisk: true);
+            }
+
+            File.Move(tempPath, path, overwrite: true);
+        }
+        catch
+        {
+            try
+            {
+                File.Delete(tempPath);
+            }
+            catch (Exception cleanupEx) when (cleanupEx is IOException or UnauthorizedAccessException)
+            {
+                // best effort
+            }
+
+            throw;
+        }
+    }
+
     public static string[] FileList(string root, string filter = "*.xml")
     {
         FileInfo[] files = new DirectoryInfo(root).GetFiles(filter);

@@ -79,7 +79,7 @@ public static class DependencyResolutionOrchestrator
 
         if (!context.DebugMode)
         {
-            BackendI18nLine.Write("dependencyResolutionComplete", resolvedCount.ToString("N0"), sw.Elapsed.ToString(@"mm\:ss"));
+            BackendI18nLine.Write("dependencyResolutionComplete", resolvedCount.ToString("N0"), PipelineRunSupport.FormatElapsed(sw.Elapsed));
             context.Log.WriteLocalized(ConsoleMessageKind.Complete, "dependenciesResolvedComplete", always: true, resolvedCount.ToString("N0"));
         }
     }

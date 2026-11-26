@@ -48,14 +48,17 @@ public static class GameBuildDetector
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private static readonly Regex VersionBranchRegex = new(
-        @"(?<![A-Za-z0-9])(?<version>\d+\.\d+\.\d+\.\d+(?:\.\d+)?)\s+(?<branch>//Anno\d/[A-Za-z0-9_/\.-]+)",
+        // The trailing lookahead requires a terminator after the branch, so a match cut off at a
+        // 4 MB scan-chunk boundary is not accepted half-read (the next chunk's overlap sees it whole).
+        @"(?<![A-Za-z0-9])(?<version>\d+\.\d+\.\d+\.\d+(?:\.\d+)?)\s+(?<branch>//Anno\d/[A-Za-z0-9_/\.-]+)(?=[^A-Za-z0-9_/\.-])",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     /// <summary>
     /// Anno 1800 embeds a Goldmaster build id as null-padded ASCII fragments near "Goldmaster" / "Anno7".
     /// </summary>
     private static readonly Regex GoldmasterVersionRegex = new(
-        @"Goldmaster.{0,120}?(?<version>\d+\.\d+\.\d+\.\d+)(?:\s+main)?",
+        // Version must be followed by a non-digit (not ".<digit>"), see VersionBranchRegex.
+        @"Goldmaster.{0,120}?(?<version>\d+\.\d+\.\d+\.\d+)(?!\d)(?!\.\d)(?=.)(?:\s+main)?",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
 
     private static readonly Regex DocumentsBuildStringRegex = new(

@@ -50,7 +50,10 @@ public class LocalizedDisplayConverter : IMultiValueConverter
             "gameLanguage" => "gameLanguages." + NormalizeGameLanguageKey(value),
             _ => value
         };
-        return StringResourceManager.Instance.GetString(key);
+        string localized = StringResourceManager.Instance.GetString(key);
+        // GetString returns the key path itself when it is missing (e.g. an unmapped game language
+        // file); show the original value instead of "gameLanguages.xyz".
+        return string.Equals(localized, key, StringComparison.Ordinal) ? value : localized;
     }
 
     private static string NormalizeGameLanguageKey(string value)

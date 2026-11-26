@@ -8,9 +8,13 @@ namespace AssetSplitterUI.Services;
 /// <summary>Appends a grouped developer issue summary to the console after extraction (no log scraping).</summary>
 internal static class ExtractionIssueSummaryAppender
 {
-    public static void AppendIfAny(MainWindowLogStore logStore, string annoAssetsPath, string? reportPathFromThisRun = null)
+    public static void AppendIfAny(
+        MainWindowLogStore logStore,
+        string annoAssetsPath,
+        string? reportPathFromThisRun = null,
+        DateTime? runStartedUtc = null)
     {
-        var report = TryLoadForRun(annoAssetsPath, reportPathFromThisRun);
+        var report = TryLoadForRun(annoAssetsPath, reportPathFromThisRun, runStartedUtc);
         if (report?.Counts is { Total: > 0 })
         {
             AppendReport(logStore, report);
@@ -18,9 +22,13 @@ internal static class ExtractionIssueSummaryAppender
     }
 
     /// <summary>In debug mode, always ends the console with a structured issue block (issues listed or explicit none).</summary>
-    public static void AppendForDeveloperMode(MainWindowLogStore logStore, string annoAssetsPath, string? reportPathFromThisRun = null)
+    public static void AppendForDeveloperMode(
+        MainWindowLogStore logStore,
+        string annoAssetsPath,
+        string? reportPathFromThisRun = null,
+        DateTime? runStartedUtc = null)
     {
-        var report = TryLoadForRun(annoAssetsPath, reportPathFromThisRun);
+        var report = TryLoadForRun(annoAssetsPath, reportPathFromThisRun, runStartedUtc);
         if (report?.Counts is { Total: > 0 })
         {
             AppendReport(logStore, report);

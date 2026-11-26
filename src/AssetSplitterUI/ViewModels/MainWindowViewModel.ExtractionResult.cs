@@ -31,7 +31,7 @@ public partial class MainWindowViewModel
                     OnPropertyChanged(nameof(ExtractButtonText));
                     SetStatusTextLocalized(
                         "statusMessages.phase1Complete",
-                        StringResourceManager.Instance.GetString("buttons.processAssets"));
+                        new LocalizedConsoleArgument("buttons.processAssets"));
                     StatusIsError = false;
                     ExtractionRunResultAppender.AppendPhase1Complete(_logStore);
                 }
@@ -54,14 +54,16 @@ public partial class MainWindowViewModel
                         ExtractionIssueSummaryAppender.AppendForDeveloperMode(
                             _logStore,
                             GetResolvedAnnoAssetsPath(),
-                            _lastRunIssueReportPath);
+                            _lastRunIssueReportPath,
+                            _lastRunStartedUtc);
                     }
                     else
                     {
                         ExtractionIssueSummaryAppender.AppendIfAny(
                             _logStore,
                             GetResolvedAnnoAssetsPath(),
-                            _lastRunIssueReportPath);
+                            _lastRunIssueReportPath,
+                            _lastRunStartedUtc);
                     }
                 }
 

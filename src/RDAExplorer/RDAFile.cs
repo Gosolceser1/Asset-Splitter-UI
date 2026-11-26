@@ -79,7 +79,7 @@ public class RDAFile
             Offset = dir.Offset,
             UncompressedSize = dir.FileSize,
             CompressedSize = dir.Compressed,
-            TimeStamp = DateTimeExtension.FromTimeStamp(dir.Timestamp)
+            TimeStamp = DateTimeExtension.FromTimeStampOrMin(dir.Timestamp)
         };
 
         if (((int)block.Flags & 4) != 4)

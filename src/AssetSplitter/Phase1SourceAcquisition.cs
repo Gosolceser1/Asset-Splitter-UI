@@ -181,6 +181,15 @@ internal static class Phase1SourceAcquisition
         else
         {
             string sourceXmlDirectory = Path.Combine(gameOutputRoot, "source_xml_" + gameType);
+            if (PathsReferToSameDirectory(context.AssetRoot, sourceXmlDirectory))
+            {
+                // The input folder IS the destination (user pointed the tool at its own source_xml):
+                // preparing it would wipe the user's XML before copying from it. Use it in place.
+                context.SourceXmlFolder = sourceXmlDirectory + Path.DirectorySeparatorChar;
+                SourceXmlCache.WriteStamp(sourceXmlDirectory, gameType, context.DetectedGameBuild, context.Log);
+                return ValidatePhase1SourceFiles(context, gameType) ? 0 : 1;
+            }
+
             if (!OutputDirectoryManager.TryPrepareSourceXmlDirectory(context, sourceXmlDirectory))
             {
                 return 1;
@@ -210,6 +219,26 @@ internal static class Phase1SourceAcquisition
             SourceXmlCache.WriteStamp(sourceXmlDirectory, gameType, context.DetectedGameBuild, context.Log);
         }
         return ValidatePhase1SourceFiles(context, gameType) ? 0 : 1;
+    }
+
+    private static bool PathsReferToSameDirectory(string left, string right)
+    {
+        if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+        {
+            return false;
+        }
+
+        try
+        {
+            return string.Equals(
+                Path.TrimEndingDirectorySeparator(Path.GetFullPath(left)),
+                Path.TrimEndingDirectorySeparator(Path.GetFullPath(right)),
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
     }
 
     internal static long EstimatePhase1PlanUnits(PipelineContext context, string gameType, bool forceRefresh = false)

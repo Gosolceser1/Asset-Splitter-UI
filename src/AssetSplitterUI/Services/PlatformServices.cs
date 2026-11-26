@@ -104,7 +104,7 @@ public sealed class PlatformServices(Window? parentWindow = null) : IPlatformSer
                     return;
                 }
 
-                _ = Process.Start(new ProcessStartInfo
+                using Process? fileManagerProcess = Process.Start(new ProcessStartInfo
                 {
                     FileName = fileManager,
                     ArgumentList = { path },

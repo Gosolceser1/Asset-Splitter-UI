@@ -81,11 +81,11 @@ public static partial class RdaArchiveExtractor
         if (context.DebugMode)
         {
             WriteDebugAnno1800PhaseSummary(context, processed, totalRdas, sw.Elapsed, stoppedAtArchive, fileProvenance);
-            context.Log.Debug(string.Format(ConsoleMessages.Get("debugRdaFinishedPhase"), $"Anno 1800 ({sw.Elapsed:mm\\:ss})"));
+            context.Log.Debug(string.Format(ConsoleMessages.Get("debugRdaFinishedPhase"), $"Anno 1800 ({PipelineRunSupport.FormatElapsed(sw.Elapsed)})"));
         }
         else
         {
-            BackendI18nLine.Write("rdaExtractionCompleteNonDebug", processed, totalRdas, sw.Elapsed.ToString(@"mm\:ss"));
+            BackendI18nLine.Write("rdaExtractionCompleteNonDebug", processed, totalRdas, PipelineRunSupport.FormatElapsed(sw.Elapsed));
         }
     }
 
@@ -121,7 +121,7 @@ public static partial class RdaArchiveExtractor
             ConsoleMessages.Get("debugRdaAnno1800PhaseSummary"),
             archivesScanned.ToString("N0"),
             totalArchives.ToString("N0"),
-            elapsed.ToString(@"mm\:ss"),
+            PipelineRunSupport.FormatElapsed(elapsed),
             stopNote,
             fileProvenance.Count.ToString("N0")));
 

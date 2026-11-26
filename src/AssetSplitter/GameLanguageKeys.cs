@@ -18,6 +18,7 @@ internal static class GameLanguageKeys
         ["korean"] = "Korean",
         ["chinese"] = "Chinese (Simplified)",
         ["tchinese"] = "Chinese (Traditional)",
+        ["taiwanese"] = "Chinese (Traditional)",
         ["czech"] = "Czech",
         ["portuguese"] = "Portuguese",
         ["brazilian"] = "Brazilian Portuguese",

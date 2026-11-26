@@ -2,6 +2,17 @@ namespace AssetProcessor;
 
 internal static class PipelineRunSupport
 {
+    /// <summary>
+    /// Elapsed time as mm:ss, or h:mm:ss for runs of an hour or more (<c>mm\:ss</c> alone wrapped,
+    /// so a 1h05m run was reported as 05:00).
+    /// </summary>
+    internal static string FormatElapsed(TimeSpan elapsed) =>
+        elapsed.TotalHours >= 1
+            ? string.Create(
+                System.Globalization.CultureInfo.InvariantCulture,
+                $"{(int)elapsed.TotalHours}:{elapsed.Minutes:00}:{elapsed.Seconds:00}")
+            : elapsed.ToString(@"mm\:ss", System.Globalization.CultureInfo.InvariantCulture);
+
     internal static void RefreshGuidFileIndex(PipelineContext context)
     {
         if (!context.FixDependencies)
@@ -115,14 +126,14 @@ internal static class PipelineRunSupport
             Console.WriteLine();
             BackendI18nLine.Write("extractionCompleteHeader");
             BackendI18nLine.Write("processedAssetsSummary", assetCount.ToString("N0"));
-            BackendI18nLine.Write("totalTimeSummary", totalSw.Elapsed.ToString(@"mm\:ss"));
+            BackendI18nLine.Write("totalTimeSummary", PipelineRunSupport.FormatElapsed(totalSw.Elapsed));
             Console.WriteLine();
         }
         else
         {
             context.Log.WriteLocalized(ConsoleMessageKind.Complete, "extractionCompleteHeader", always: true);
             context.Log.WriteLocalized(ConsoleMessageKind.Info, "processedAssetsSummary", always: true, assetCount.ToString("N0"));
-            context.Log.WriteLocalized(ConsoleMessageKind.Info, "totalTimeSummary", always: true, totalSw.Elapsed.ToString(@"mm\:ss"));
+            context.Log.WriteLocalized(ConsoleMessageKind.Info, "totalTimeSummary", always: true, PipelineRunSupport.FormatElapsed(totalSw.Elapsed));
         }
 
         // UI key is successExtractionComplete; backend ConsoleMessages key is assetExtractionSuccess.

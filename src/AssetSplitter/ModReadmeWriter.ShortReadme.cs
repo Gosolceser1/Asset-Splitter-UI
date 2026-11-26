@@ -23,8 +23,10 @@ internal static partial class ModReadmeWriter
         string internalName = DisplayValue(metadata.InternalName);
         string pathHint = DisplayValue(metadata.PathHint);
         string guideLink = GetModdingGuideRelativeLink(modRoot, outputRoot);
-        string assetLang = NormalizeAssetLanguage(context.AssetLanguage);
-        Func<string, string> t = key => ConsoleMessages.GetForLanguage(key, assetLang);
+        // README text language is --readme-lang (documented); the extracted game language only
+        // decides asset names.
+        string readmeLang = NormalizeAssetLanguage(context.ReadmeLanguage);
+        Func<string, string> t = key => ConsoleMessages.GetForLanguage(key, readmeLang);
         string exampleName = EscapeXmlText($"{metadata.DisplayName} (modded)");
         var lines = new List<string>
         {

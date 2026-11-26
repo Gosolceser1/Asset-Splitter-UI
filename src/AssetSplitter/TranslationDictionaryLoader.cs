@@ -116,8 +116,23 @@ public static class TranslationDictionaryLoader
         bool hasValueNode = false;
         bool skippedRootTextElement = false;
 
-        while (textReader.Read())
+        // ReadElementContentAsString already moves the reader to the node after the element; calling
+        // Read() again then skipped that node, so in minified XML (<GUID>1</GUID><Text>v</Text>
+        // with no whitespace between) the value element was never seen.
+        bool advance = true;
+        while (true)
         {
+            if (advance && !textReader.Read())
+            {
+                break;
+            }
+
+            advance = true;
+            if (textReader.EOF)
+            {
+                break;
+            }
+
             if (textReader.NodeType != XmlNodeType.Element)
             {
                 continue;
@@ -126,10 +141,12 @@ public static class TranslationDictionaryLoader
             if (textReader.Name.Equals("LineId", StringComparison.OrdinalIgnoreCase))
             {
                 lineId = textReader.ReadElementContentAsString().Trim();
+                advance = false;
             }
             else if (textReader.Name.Equals("GUID", StringComparison.OrdinalIgnoreCase))
             {
                 guid = textReader.ReadElementContentAsString().Trim();
+                advance = false;
             }
             else if (textReader.Name.Equals("Text", StringComparison.OrdinalIgnoreCase))
             {
@@ -141,6 +158,7 @@ public static class TranslationDictionaryLoader
 
                 value = textReader.ReadElementContentAsString();
                 hasValueNode = true;
+                advance = false;
             }
         }
 

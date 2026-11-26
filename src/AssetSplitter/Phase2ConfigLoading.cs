@@ -63,7 +63,7 @@ internal static class Phase2ConfigLoading
 
             if (!context.DebugMode)
             {
-                BackendI18nLine.Write("configLoadedIn", phase2Sw.Elapsed.ToString(@"mm\:ss"));
+                BackendI18nLine.Write("configLoadedIn", PipelineRunSupport.FormatElapsed(phase2Sw.Elapsed));
             }
         }
         else

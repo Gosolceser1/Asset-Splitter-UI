@@ -11,7 +11,11 @@ internal static class ExtractionIssueSummaryLoader
         PropertyNameCaseInsensitive = true,
     };
 
-    public static ExtractionIssueReport? TryLoadLatest(string annoAssetsPath)
+    /// <param name="notWrittenBeforeUtc">
+    /// When set, ignore reports last written before this time (a previous run's report must not be
+    /// shown as the result of a run that wrote none).
+    /// </param>
+    public static ExtractionIssueReport? TryLoadLatest(string annoAssetsPath, DateTime? notWrittenBeforeUtc = null)
     {
         string logsDir = Path.Combine(annoAssetsPath, "logs");
         if (!Directory.Exists(logsDir))
@@ -19,11 +23,21 @@ internal static class ExtractionIssueSummaryLoader
             return null;
         }
 
-        string? latest = Directory
-            .EnumerateFiles(logsDir, "issues_*.json", SearchOption.TopDirectoryOnly)
-            .OrderByDescending(File.GetLastWriteTimeUtc)
-            .ThenByDescending(static path => Path.GetFileName(path), StringComparer.OrdinalIgnoreCase)
-            .FirstOrDefault();
+        string? latest;
+        try
+        {
+            latest = Directory
+                .EnumerateFiles(logsDir, "issues_*.json", SearchOption.TopDirectoryOnly)
+                .Where(path => notWrittenBeforeUtc is null || File.GetLastWriteTimeUtc(path) >= notWrittenBeforeUtc.Value)
+                .OrderByDescending(File.GetLastWriteTimeUtc)
+                .ThenByDescending(static path => Path.GetFileName(path), StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            UILogger.Debug(nameof(ExtractionIssueSummaryLoader), ex);
+            return null;
+        }
 
         if (latest is null)
         {
@@ -37,14 +51,17 @@ internal static class ExtractionIssueSummaryLoader
     /// Loads the report for this run when <paramref name="reportPathFromThisRun"/> is set
     /// (from the backend <c>[ISSUE_SUMMARY]</c> marker); otherwise falls back to the newest file.
     /// </summary>
-    public static ExtractionIssueReport? TryLoadForRun(string annoAssetsPath, string? reportPathFromThisRun)
+    public static ExtractionIssueReport? TryLoadForRun(
+        string annoAssetsPath,
+        string? reportPathFromThisRun,
+        DateTime? runStartedUtc = null)
     {
         if (!string.IsNullOrWhiteSpace(reportPathFromThisRun) && File.Exists(reportPathFromThisRun))
         {
             return TryLoadFromFile(reportPathFromThisRun);
         }
 
-        return TryLoadLatest(annoAssetsPath);
+        return TryLoadLatest(annoAssetsPath, runStartedUtc);
     }
 
     /// <summary>Extracts <c>reportPath</c> from a backend <c>[ISSUE_SUMMARY] {...}</c> line without loading the file.</summary>

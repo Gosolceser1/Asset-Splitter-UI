@@ -80,7 +80,7 @@ public static partial class ConsoleMessages
     public static string GetForLanguage(string key, string language)
     {
         string normalized = NormalizeLanguage(language);
-        Dictionary<string, string> messages = LoadMessagesFromFile(normalized);
+        Dictionary<string, string> messages = GetCachedMessages(normalized);
         if (messages.TryGetValue(key, out string? msg) && !string.IsNullOrEmpty(msg))
         {
             return msg;
@@ -88,7 +88,7 @@ public static partial class ConsoleMessages
 
         if (normalized != EnglishLanguage)
         {
-            messages = LoadMessagesFromFile(EnglishLanguage);
+            messages = GetCachedMessages(EnglishLanguage);
             if (messages.TryGetValue(key, out msg) && !string.IsNullOrEmpty(msg))
             {
                 return msg;
@@ -102,6 +102,16 @@ public static partial class ConsoleMessages
 
         return key;
     }
+
+    /// <summary>
+    /// Per-language message tables for <see cref="GetForLanguage"/>. Re-reading and re-parsing the
+    /// ~75 KB JSON file on every call (dozens of calls per exported mod) was a large slowdown.
+    /// </summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Dictionary<string, string>> LanguageMessageCache =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private static Dictionary<string, string> GetCachedMessages(string normalizedLanguage) =>
+        LanguageMessageCache.GetOrAdd(normalizedLanguage, LoadMessagesFromFile);
 
     /// <summary>Initialises _messages for the current language and _fallbackMessages for English (or DefaultMessages when already English).</summary>
     private static void LoadMessages()
@@ -157,7 +167,7 @@ public static partial class ConsoleMessages
             "japanese" => "ja",
             "korean" => "ko",
             "chinese" or "simplified_chinese" => "zh",
-            "traditional_chinese" or "tchinese" => "tw",
+            "traditional_chinese" or "tchinese" or "taiwanese" => "tw",
             "mexican" => "es",
             var normalized => normalized
         };

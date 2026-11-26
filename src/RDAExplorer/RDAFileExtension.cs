@@ -98,7 +98,7 @@ public static class RDAFileExtension
 
     private static void TallySkip(RdaExtractStatistics stats, string reason)
     {
-        if (reason.Contains("newer patch already", StringComparison.OrdinalIgnoreCase))
+        if (reason.Contains("already extracted", StringComparison.OrdinalIgnoreCase))
         {
             stats.SkippedExistingBare++;
         }

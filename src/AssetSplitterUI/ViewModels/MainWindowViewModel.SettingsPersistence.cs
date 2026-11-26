@@ -75,6 +75,36 @@ public partial class MainWindowViewModel
         return string.Join(" ", args.Select(a => a.Contains(' ') ? $"\"{a}\"" : a));
     }
 
+    /// <summary>
+    /// Command line of the run that is actually launched (from the effective config, e.g. first-run
+    /// source extraction with all options off and --source-extraction-only), with the AnnoAssets
+    /// output path the runner passes. For display only.
+    /// </summary>
+    private static string FormatEffectiveBackendArgs(AssetProcessorRunConfig effectiveConfig, string annoAssetsPath)
+    {
+        var config = new AssetProcessorRunConfig
+        {
+            GamePath = effectiveConfig.GamePath,
+            OutputPath = annoAssetsPath,
+            Language = effectiveConfig.Language,
+            ConsoleLanguage = effectiveConfig.ConsoleLanguage,
+            ReadmeLanguage = effectiveConfig.ReadmeLanguage,
+            SingleGuid = effectiveConfig.SingleGuid,
+            AddComments = effectiveConfig.AddComments,
+            FixDependencies = effectiveConfig.FixDependencies,
+            CreateTemplateFolders = effectiveConfig.CreateTemplateFolders,
+            ModOpsWrap = effectiveConfig.ModOpsWrap,
+            IncludeDefaultProperties = effectiveConfig.IncludeDefaultProperties,
+            SplitTemplates = effectiveConfig.SplitTemplates,
+            CreateAssetMods = effectiveConfig.CreateAssetMods,
+            DebugMode = effectiveConfig.DebugMode,
+            SourceExtractionOnly = effectiveConfig.SourceExtractionOnly,
+            ForceFullRebuild = effectiveConfig.ForceFullRebuild,
+        };
+        var args = GuiProcessRunner.BuildArguments(config, "english");
+        return string.Join(" ", args.Select(a => a.Contains(' ') ? $"\"{a}\"" : a));
+    }
+
     private string GetBackendConsoleLanguage() =>
         StringResourceManager.GetLanguageCode(SelectedUILanguage) switch
         {
@@ -101,8 +131,25 @@ public partial class MainWindowViewModel
         _logStore.ClearWithoutNotify();
     }
 
+    private void OnUILoggerVisibleMessage(string message)
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            _logStore.AppendRaw(message);
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(() => _logStore.AppendRaw(message));
+        }
+    }
+
     public void Dispose()
     {
+        if (ReferenceEquals(UILogger.VisibleLog, _visibleLogSink))
+        {
+            UILogger.VisibleLog = null;
+        }
+
         StringResourceManager.Instance.PropertyChanged -= OnStringResourceManagerPropertyChanged;
         ApplicationThemeService.ThemeChanged -= OnApplicationThemeChanged;
         AvailableGameLanguages.CollectionChanged -= OnAvailableGameLanguagesChanged;

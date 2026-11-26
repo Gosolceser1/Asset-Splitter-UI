@@ -84,7 +84,9 @@ public static class GeneratedXmlFootprint
         string timeZoneName = GetCurrentLocalTimeZoneName(generatedAt);
 
         string buildTimePart = string.IsNullOrWhiteSpace(builtAt) ? "" : $"; Build time: {builtAt}";
-        return $"{Prefix} Game: {gameName}; Game build: {build}{buildTimePart}; Generated local time: {generatedAt:yyyy-MM-dd HH:mm:ss zzz} ({timeZoneName}) ";
+        return string.Create(
+            System.Globalization.CultureInfo.InvariantCulture,
+            $"{Prefix} Game: {gameName}; Game build: {build}{buildTimePart}; Generated local time: {generatedAt:yyyy-MM-dd HH:mm:ss zzz} ({timeZoneName}) ");
     }
 
     public static string BuildGameBuildDescription(PipelineContext context)
@@ -105,7 +107,7 @@ public static class GeneratedXmlFootprint
     public static string FormatGeneratedLocalTime(DateTimeOffset generatedAt)
     {
         string timeZoneName = GetCurrentLocalTimeZoneName(generatedAt);
-        return $"{generatedAt:yyyy-MM-dd HH:mm:ss zzz} ({timeZoneName})";
+        return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{generatedAt:yyyy-MM-dd HH:mm:ss zzz} ({timeZoneName})");
     }
 
     private static void RemoveExistingFootprint(XmlDocument document)
@@ -140,7 +142,7 @@ public static class GeneratedXmlFootprint
     }
 
     private static string SanitizeCommentText(string value) =>
-        value.Replace("--", "-", StringComparison.Ordinal).Trim();
+        AssetTextSanitizer.ToSafeXmlCommentBody(value);
 
     private static void SaveWithRetry(XmlDocument document, string outputPath)
     {
