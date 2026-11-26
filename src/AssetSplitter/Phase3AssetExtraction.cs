@@ -72,11 +72,11 @@ internal static class Phase3AssetExtraction
             // Enrich only newly extracted files; GuidIndex still sees the full tree via CollectGuidIndexFilePaths.
             // Empty RepairOnlyGuids = mod-only repair (no XML re-extract).
             mainOutputFiles = context.RepairOutputFiles
-                .Where(static path => File.Exists(path) && !IsUnderBaseStaging(path))
+                .Where(path => File.Exists(path) && !IsUnderBaseStaging(context, path))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
             baseAssetGuidFiles = context.RepairOutputFiles
-                .Where(static path => File.Exists(path) && IsUnderBaseStaging(path))
+                .Where(path => File.Exists(path) && IsUnderBaseStaging(context, path))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
@@ -101,11 +101,12 @@ internal static class Phase3AssetExtraction
         return 0;
     }
 
-    private static bool IsUnderBaseStaging(string path)
+    private static bool IsUnderBaseStaging(PipelineContext context, string path)
     {
+        // Honour the configured staging folder name (app_settings.json "baseasset_folder").
+        string stagingFolderName = Path.GetFileName(OutputDirectoryManager.GetBaseAssetGuidStagingPath(context));
         string normalized = path.Replace('\\', '/');
-        return normalized.Contains("/BaseAssetGUID/", StringComparison.OrdinalIgnoreCase)
-            || normalized.Contains("/baseassetguid/", StringComparison.OrdinalIgnoreCase);
+        return normalized.Contains("/" + stagingFolderName + "/", StringComparison.OrdinalIgnoreCase);
     }
 
     internal static void TryCleanEmptySingleAssetOutput(PipelineContext context)

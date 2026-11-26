@@ -64,12 +64,17 @@ internal sealed class App
 
         if (dataSeries.Length > 0)
         {
-            List<DataRdaFile> ordered = dataSeries
+            // Newest patch must win:
+            // - bare (-n): ExtractToRoot skips existing destinations, so process newest first.
+            // - with paths: Extract overwrites (FileMode.Create), so process oldest first and
+            //   let higher dataN.rda archives overwrite older copies.
+            IEnumerable<DataRdaFile> indexed = dataSeries
               .Select(fi => new { File = fi, Index = ParseIndex(fi.Name) })
               .Where(x => x.Index >= 0)
-              .Select(x => new DataRdaFile(x.File, x.Index))
-              .OrderByDescending(x => x.Index)
-              .ToList();
+              .Select(x => new DataRdaFile(x.File, x.Index));
+            List<DataRdaFile> ordered = bare
+              ? [.. indexed.OrderByDescending(x => x.Index)]
+              : [.. indexed.OrderBy(x => x.Index)];
 
             if (ordered.Count == 0)
             {

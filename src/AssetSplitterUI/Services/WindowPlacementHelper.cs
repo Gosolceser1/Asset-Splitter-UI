@@ -186,8 +186,9 @@ public static class WindowPlacementHelper
 
         double width = settings.SavedWidth >= MinWidth ? settings.SavedWidth : DefaultWidth;
         double height = settings.SavedHeight >= MinHeight ? settings.SavedHeight : DefaultHeight;
-        width = Math.Clamp(width, MinWidth, maxWidthDip);
-        height = Math.Clamp(height, MinHeight, maxHeightDip);
+        // Math.Clamp throws when max < min (small or high-DPI work areas); cap at the work area instead.
+        width = Math.Min(Math.Max(width, MinWidth), Math.Max(maxWidthDip, 1));
+        height = Math.Min(Math.Max(height, MinHeight), Math.Max(maxHeightDip, 1));
 
         int frameWidthPx = ToPhysical(width, scale);
         int frameHeightPx = ToPhysical(height, scale) + TitleBarPhysicalHeightEstimate;

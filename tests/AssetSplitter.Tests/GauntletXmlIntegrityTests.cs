@@ -693,6 +693,44 @@ public sealed class GauntletXmlIntegrityTests : IDisposable
             + "XmlLeafPathBuilder emits Item[n] for n>=2 so TemplateMergeService usually stays consistent.");
     }
 
+    [Fact]
+    public void AssetXmlPathEditor_Upsert_RepeatedLeafSiblings_KeepsEachSlot()
+    {
+        var target = new XmlDocument();
+        target.LoadXml("""
+            <ModOps><ModOp>
+              <Asset><Values><Tags><Tag>old</Tag></Tags></Values></Asset>
+            </ModOp></ModOps>
+            """);
+
+        var source = new XmlDocument();
+        source.LoadXml("""
+            <ModOps><ModOp>
+              <Asset><Values><Tags><Tag>a</Tag><Tag>b</Tag></Tags></Values></Asset>
+            </ModOp></ModOps>
+            """);
+
+        XmlNode targetRoot = target.SelectSingleNode("//ModOp")!;
+        XmlNode sourceRoot = source.SelectSingleNode("//ModOp")!;
+
+        // XmlLeafPathBuilder emits Tag and Tag[2] for repeated leaf siblings.
+        foreach (string xpath in new[] { "Asset/Values/Tags/Tag", "Asset/Values/Tags/Tag[2]" })
+        {
+            AssetXmlPathEditor.UpsertNode(
+                target,
+                source,
+                targetRoot,
+                sourceRoot.SelectSingleNode(xpath)!,
+                xpath,
+                addInheritanceComments: false);
+        }
+
+        XmlNodeList tags = target.SelectNodes("//Tags/Tag")!;
+        Assert.Equal(2, tags.Count);
+        Assert.Equal("a", tags[0]!.InnerText);
+        Assert.Equal("b", tags[1]!.InnerText);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private PipelineContext CreateContext(string workDir)

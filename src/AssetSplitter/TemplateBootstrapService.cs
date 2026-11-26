@@ -53,7 +53,15 @@ public static class TemplateBootstrapService
             if (autoTemplates)
             {
                 context.Log.WriteLocalized(ConsoleMessageKind.Info, "autoTemplatesExtractingAll", always: true);
-                HashSet<string> allTemplates = TemplateExtractor.ExtractTemplatesFromXml(TemplateExtractor.FindTemplatesXml(context.AssetRoot));
+                // templates.xml lives inside an RDA archive in the game install; Phase 1 extracts it
+                // into source_xml. Only fall back to searching AssetRoot for loose-file setups.
+                string sourceTemplatesXml = Path.Combine(context.SourceXmlFolder, "templates.xml");
+                string templatesXmlPath = File.Exists(sourceTemplatesXml)
+                    ? sourceTemplatesXml
+                    : TemplateExtractor.FindTemplatesXml(context.AssetRoot);
+                HashSet<string> allTemplates = string.IsNullOrEmpty(templatesXmlPath)
+                    ? []
+                    : TemplateExtractor.ExtractTemplatesFromXml(templatesXmlPath);
                 if (allTemplates.Count > 0)
                 {
                     templateList = [.. allTemplates.OrderBy(t => t)];

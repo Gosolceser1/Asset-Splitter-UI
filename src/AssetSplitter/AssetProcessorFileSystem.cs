@@ -64,7 +64,7 @@ internal static class AssetProcessorFileSystem
         }
     }
 
-    public static string? FindAssetFile(string assetOutputDirectory, string guid, bool searchTemplateFolders)
+    public static string? FindAssetFile(string assetOutputDirectory, string guid, bool searchTemplateFolders, string? stagingFolderName = null)
     {
         if (string.IsNullOrWhiteSpace(guid) || string.IsNullOrWhiteSpace(assetOutputDirectory))
         {
@@ -78,7 +78,7 @@ internal static class AssetProcessorFileSystem
             return match;
         }
 
-        string stagingDirectory = Path.Combine(assetOutputDirectory, OutputStructureSettings.DefaultBaseAssetFolder);
+        string stagingDirectory = Path.Combine(assetOutputDirectory, string.IsNullOrWhiteSpace(stagingFolderName) ? OutputStructureSettings.DefaultBaseAssetFolder : stagingFolderName);
         if (Directory.Exists(stagingDirectory))
         {
             match = FindAssetFileWithPrefix(stagingDirectory, prefix, SearchOption.TopDirectoryOnly);

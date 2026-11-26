@@ -79,7 +79,9 @@ internal static class AssetXmlPathEditor
         XmlNode newElement = targetDocument.CreateElement(sourceNode.Name);
         newElement.InnerText = sourceNode.InnerText;
 
-        XmlNode? existing = parentNode.SelectSingleNode(sourceNode.Name);
+        // Use the leaf segment including its positional index ("Tag[2]") so repeated siblings
+        // (<Tag>a</Tag><Tag>b</Tag>) update their own slot instead of all overwriting the first one.
+        XmlNode? existing = parentNode.SelectSingleNode(segments[^1]);
         if (existing != null)
         {
             parentNode.ReplaceChild(newElement, existing);

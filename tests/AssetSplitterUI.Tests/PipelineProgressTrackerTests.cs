@@ -116,4 +116,19 @@ public sealed class PipelineProgressTrackerTests
 
         Assert.Equal(0, tracker.OverallPercent);
     }
+
+    [Theory]
+    [InlineData("[ 38,7%] [12.200/31.565] - Extracting: assets")]          // de-DE
+    [InlineData("[ 38,7%] [12\u202F200/31\u202F565] - Extracting: assets")] // fr-FR
+    [InlineData("[ 38,7%] [12\u00A0200/31\u00A0565] - Extracting: assets")] // ru-RU
+    [InlineData("[ 38.7%] [12,200/31,565] - Extracting: assets")]          // en-US / invariant
+    public void Feed_ParsesCultureGroupedCounts(string line)
+    {
+        var tracker = new PipelineProgressTracker();
+
+        tracker.Feed(line);
+
+        // 12200 / 31565 ≈ 38.65%
+        Assert.InRange(tracker.OverallPercent, 38.0, 39.5);
+    }
 }

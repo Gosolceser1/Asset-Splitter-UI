@@ -120,7 +120,10 @@ public static class TemplateMergeOrchestrator
             BackendI18nLine.Write("mergedTemplatesCount", actuallyMergedCount.ToString("N0"));
         }
 
-        return context.Issues.HasErrors ? 1 : 0;
+        // Per-file merge failures are recorded in context.Issues and turned into a non-zero exit code
+        // at the end of the run (PipelineRunSupport.ResolveExitCode). Returning non-zero here would
+        // abort Phases 6-8 for the whole run because of an unrelated earlier error.
+        return 0;
     }
 
     private static Dictionary<string, XmlNode> BuildDefaultPropertiesIndex(XmlNode propertiesRoot)

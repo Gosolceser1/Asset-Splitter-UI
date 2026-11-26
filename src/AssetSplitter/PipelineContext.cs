@@ -80,6 +80,9 @@ public sealed class PipelineContext
     public RegionalIngredientsConfig? RegionalIngredientsConfig { get; set; }
     public AppSettingsConfig? AppSettingsConfig { get; set; }
     public string[]? AssetTemplatesList { get; set; }
+
+    /// <summary>True once <see cref="Phase2ConfigLoading.LoadProcessingPrerequisites"/> ran for this run.</summary>
+    public bool ProcessingPrerequisitesLoaded { get; set; }
     public string[] TemplatesUsed { get; set; } = [];
     public HashSet<string> LoadedPropertyNames { get; set; } = [];
     public PropertyScanResult? PropertyScan { get; set; }

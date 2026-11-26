@@ -23,6 +23,23 @@ internal static class AssetProcessorConfiguration
         return ConfigPathResolver.Resolve(subfolder, filename);
     }
 
+    /// <summary>
+    /// app_settings.json uses snake_case keys ("output_structure", "baseasset_folder", ...).
+    /// The default resolver only matches names case-insensitively, so without this every nested
+    /// setting silently stayed at its C# default.
+    /// </summary>
+    private static readonly JsonSerializerSettings SnakeCaseSettings = new()
+    {
+        ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver
+        {
+            NamingStrategy = new Newtonsoft.Json.Serialization.SnakeCaseNamingStrategy
+            {
+                ProcessDictionaryKeys = false,
+                OverrideSpecifiedNames = false,
+            },
+        },
+    };
+
     public static bool TryLoadJsonConfig<T>(string configPath, out T? config, out string? errorMessage) where T : class
     {
         config = null;
@@ -31,7 +48,9 @@ internal static class AssetProcessorConfiguration
         try
         {
             string configJson = File.ReadAllText(configPath);
-            config = JsonConvert.DeserializeObject<T>(configJson);
+            config = typeof(T) == typeof(AppSettingsConfig)
+                ? JsonConvert.DeserializeObject<T>(configJson, SnakeCaseSettings)
+                : JsonConvert.DeserializeObject<T>(configJson);
             return config is not null;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or ArgumentException or NotSupportedException)

@@ -368,10 +368,11 @@ public sealed class OutputRunCacheTests
             string sourceHash = AssetSourceHasher.HashAssetNode(LoadFirstAsset(assetsPath));
             WriteMinimalInventory(context, root, guid: "1001", withMod: false, sourceHashOverride: sourceHash);
 
-            // Non-extractable file change moves source tree hash without changing asset hashes.
+            // Unrelated source file change moves source tree hash without changing asset hashes
+            // or any file that feeds every asset (templates/properties/texts).
             File.WriteAllText(
-                Path.Combine(root, "source_xml_anno1800", "properties.xml"),
-                "<Properties><!-- edited --></Properties>");
+                Path.Combine(root, "source_xml_anno1800", "unrelated_extra.xml"),
+                "<Root><!-- edited --></Root>");
 
             OutputRunCache.Decision decision = OutputRunCache.Evaluate(context, "anno1800", forceFullRebuild: false);
             Assert.Equal(OutputRunCache.RunMode.Complete, decision.Mode);
@@ -381,6 +382,60 @@ public sealed class OutputRunCacheTests
         {
             DeleteTemp(root);
         }
+    }
+
+    [Theory]
+    [InlineData("properties.xml", "<Properties><!-- edited --></Properties>")]
+    [InlineData("templates.xml", "<Templates><!-- edited --></Templates>")]
+    [InlineData("texts_english.xml", "<TextExport><!-- edited --></TextExport>")]
+    public void Evaluate_Full_WhenGlobalSourceInputEdited_EvenIfExtractableHashesMatch(string fileName, string content)
+    {
+        string root = CreateTempGameOutput();
+        try
+        {
+            var context = CreateContext(gameOutputRoot: root, addComments: true, createAssetMods: false);
+            context.DetectedGameBuild = SampleBuild();
+            context.AssetTemplatesList = ["Building"];
+
+            string assetsPath = Path.Combine(root, "source_xml_anno1800", "assets.xml");
+            EnsureMinimalSourceXml(root);
+            File.WriteAllText(assetsPath, """
+                <Groups>
+                  <Assets>
+                    <Asset>
+                      <Template>Building</Template>
+                      <Values><Standard><GUID>1001</GUID><Name>Test</Name></Standard></Values>
+                    </Asset>
+                  </Assets>
+                </Groups>
+                """);
+            string sourceHash = AssetSourceHasher.HashAssetNode(LoadFirstAsset(assetsPath));
+            WriteMinimalInventory(context, root, guid: "1001", withMod: false, sourceHashOverride: sourceHash);
+
+            // templates.xml / properties.xml / language texts feed every output asset (defaults merge,
+            // names, comments); per-asset source hashes cannot see these edits.
+            File.WriteAllText(Path.Combine(root, "source_xml_anno1800", fileName), content);
+
+            OutputRunCache.Decision decision = OutputRunCache.Evaluate(context, "anno1800", forceFullRebuild: false);
+            Assert.Equal(OutputRunCache.RunMode.Full, decision.Mode);
+        }
+        finally
+        {
+            DeleteTemp(root);
+        }
+    }
+
+    [Fact]
+    public void BuildOptionsFingerprint_Changes_WhenTemplateListOrAutoTemplatesChange()
+    {
+        var a = new PipelineContext { AssetTemplatesList = ["Building", "Product"] };
+        var b = new PipelineContext { AssetTemplatesList = ["Building", "Product", "CustomTemplateX"] };
+        var c = new PipelineContext { AssetTemplatesList = ["Product", "Building"], AutoTemplates = true };
+        var aReordered = new PipelineContext { AssetTemplatesList = ["Product", "Building"] };
+
+        Assert.NotEqual(OutputRunCache.BuildOptionsFingerprint(a), OutputRunCache.BuildOptionsFingerprint(b));
+        Assert.NotEqual(OutputRunCache.BuildOptionsFingerprint(a), OutputRunCache.BuildOptionsFingerprint(c));
+        Assert.Equal(OutputRunCache.BuildOptionsFingerprint(a), OutputRunCache.BuildOptionsFingerprint(aReordered));
     }
 
     [Fact]

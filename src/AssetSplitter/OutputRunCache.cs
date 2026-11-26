@@ -268,11 +268,95 @@ internal static partial class OutputRunCache
             "mods=" + (context.CreateAssetMods ? "1" : "0"),
             "u=" + Norm(context.CustomTemplateFile),
             "x=" + Norm(context.CustomFixlistFile),
+            "auto=" + (context.AutoTemplates ? "1" : "0"),
+            // Effective template list (default, -u, --auto-templates or auto-updated list): adding or
+            // removing a template changes which assets are extracted, so it must not be Complete.
+            "tpl=" + HashTemplateList(context.AssetTemplatesList),
+            "xfile=" + HashOptionalFile(context.CustomFixlistFile),
             "readme=" + Norm(context.ReadmeLanguage),
             "outSchema=" + OutputSchemaVersion.ToString(),
         ];
 
         return string.Join('|', parts);
+    }
+
+    private static string HashTemplateList(string[]? templates)
+    {
+        if (templates is null || templates.Length == 0)
+        {
+            return "default";
+        }
+
+        string joined = string.Join(
+            '\n',
+            templates
+                .Select(static t => t.Trim())
+                .Where(static t => t.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Order(StringComparer.OrdinalIgnoreCase));
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(joined)))[..16];
+    }
+
+    private static string HashOptionalFile(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return "";
+        }
+
+        try
+        {
+            return File.Exists(path)
+                ? Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path)))[..16]
+                : "missing";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return "unreadable";
+        }
+    }
+
+    /// <summary>
+    /// Source files that feed <em>every</em> output asset, not just one <c>&lt;Asset&gt;</c> node:
+    /// templates.xml / properties.xml (Phase 5 template + default-property merge, split templates,
+    /// property scan) and the language text files (file names, comments). Per-asset
+    /// <c>sourceHash</c> cannot see changes to these, so a change must rebuild everything.
+    /// </summary>
+    private static bool GlobalSourceInputsChanged(PipelineContext context, StampDocument stamp, SideTreeResult sideTrees)
+    {
+        if (sideTrees.SourceXml != PresenceIssueKind.ContentChanged)
+        {
+            return false;
+        }
+
+        // Legacy stamp without per-file source hashes: cannot tell which file moved.
+        if (stamp.SourceXmlFileHashes is null || stamp.SourceXmlFileHashes.Count == 0)
+        {
+            return true;
+        }
+
+        bool usesLanguage = !string.IsNullOrWhiteSpace(context.AssetLanguage)
+            && !context.AssetLanguage.Equals("none", StringComparison.OrdinalIgnoreCase);
+        string languageFile = usesLanguage ? Path.GetFileName(context.AssetLanguage) : "";
+
+        foreach (string changedPath in sideTrees.SourceChangedPaths)
+        {
+            string fileName = Path.GetFileName(changedPath.Replace('\\', '/').TrimEnd('/'));
+            if (fileName.Equals("templates.xml", StringComparison.OrdinalIgnoreCase)
+                || fileName.Equals("properties.xml", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (usesLanguage
+                && (fileName.Equals(languageFile, StringComparison.OrdinalIgnoreCase)
+                    || fileName.Equals("texts_metadata.xml", StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static Decision Evaluate(PipelineContext context, string gameType, bool forceFullRebuild)
@@ -335,6 +419,20 @@ internal static partial class OutputRunCache
             ? stamp.BuildDisplay
             : context.DetectedGameBuild.ToDisplayString();
         int stampedAssetCount = stamp.AssetXmlCount > 0 ? stamp.AssetXmlCount : inventory.Count;
+
+        if (GlobalSourceInputsChanged(context, stamp, sideTrees))
+        {
+            return new Decision
+            {
+                Mode = RunMode.Full,
+                Reason = MissReason.SideTreeMismatch,
+                Presence = presence,
+                SideTrees = sideTrees,
+                AssetCount = stampedAssetCount,
+                ModCount = stamp.ModCount,
+                BuildDisplay = buildDisplay,
+            };
+        }
 
         // Missing per-GUID sourceHash: backfill / DiffRepair — never Full solely for blank hashes.
         if (!InventoryHasAllSourceHashes(inventory))

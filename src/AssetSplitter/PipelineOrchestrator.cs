@@ -143,6 +143,10 @@ public static class PipelineOrchestrator
             return PipelineRunSupport.FinishPipelineRun(context, totalSw, assetCount: 0, succeeded: true);
         }
 
+        // Resolve the effective template list (-u / --auto-templates / auto-updated list) before the
+        // output cache diff; otherwise Evaluate falls back to the default list and treats assets of
+        // custom templates as removed (deleted and never rebuilt).
+        Phase2ConfigLoading.LoadProcessingPrerequisites(context);
         OutputRunCache.Decision outputDecision = OutputRunCache.Evaluate(context, gameType, options.ForceFullRebuild || context.ForceFullRebuild);
         ApplyOutputCacheDecision(context, outputDecision);
         if (outputDecision.Mode == OutputRunCache.RunMode.Complete)
@@ -206,7 +210,8 @@ public static class PipelineOrchestrator
         }
 
         if (outputDecision.Mode == OutputRunCache.RunMode.DiffRepair
-            && outputDecision.GameDiff is { RebuildGuids.Count: 0 })
+            && outputDecision.GameDiff is { RebuildGuids.Count: 0 }
+            && !outputDecision.ForceResplitTemplates)
         {
             // Only removals — stamp refresh after deletes already applied.
             OutputRunCache.WriteStampAndInventory(context, gameType, context.Log);
@@ -330,6 +335,9 @@ public static class PipelineOrchestrator
             int phase5Result = TemplateMergeOrchestrator.Execute(context, gameType, mainOutputFiles);
             if (phase5Result != 0)
             {
+                // Fatal (properties.xml / templates.xml could not be loaded): still emit the issue summary
+                // so the GUI does not fall back to a previous run's report.
+                PipelineIssueReporter.WriteSummary(context, runSucceeded: false);
                 return phase5Result;
             }
         }

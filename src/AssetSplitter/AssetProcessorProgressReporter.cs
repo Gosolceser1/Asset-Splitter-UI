@@ -127,8 +127,9 @@ public class AssetProcessorProgressReporter
 
     private string FormatProgressLine(double progressPercentage, int currentCount, int totalCount, string operation)
     {
-        string progressPct = $"{progressPercentage,5:F1}%";
-        string counts = $"{currentCount,6:N0}/{totalCount:N0}";
+        System.Globalization.CultureInfo invariant = System.Globalization.CultureInfo.InvariantCulture;
+        string progressPct = string.Create(invariant, $"{progressPercentage,5:F1}%");
+        string counts = string.Create(invariant, $"{currentCount,6:N0}/{totalCount:N0}");
         return $"[{progressPct}] [{counts}] - {operation}";
     }
 

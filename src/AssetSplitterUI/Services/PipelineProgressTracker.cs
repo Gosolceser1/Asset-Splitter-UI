@@ -153,7 +153,31 @@ internal sealed class PipelineProgressTracker
         }
 
         string numPart = outputLine[prefix.Length..].Trim();
-        return long.TryParse(numPart.Replace(",", "").Replace(" ", ""), out planUnits) && planUnits > 0;
+        return TryParseGroupedCount(numPart, out planUnits) && planUnits > 0;
+    }
+
+    /// <summary>
+    /// Parses a count that may contain culture-specific group separators
+    /// (",", ".", "'", U+00A0, U+202F, ...). Only ASCII digits are kept.
+    /// </summary>
+    private static bool TryParseGroupedCount(string text, out long value)
+    {
+        value = 0;
+        var digits = new System.Text.StringBuilder(text.Length);
+        foreach (char c in text)
+        {
+            if (char.IsAsciiDigit(c))
+            {
+                digits.Append(c);
+            }
+            else if (!char.IsWhiteSpace(c) && c is not (',' or '.' or '\'' or ' ' or ' ' or ' '))
+            {
+                return false;
+            }
+        }
+
+        return digits.Length > 0
+            && long.TryParse(digits.ToString(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out value);
     }
 
     private static bool TryParseProgressLine(string outputLine, out long current, out long total, out string operation)
@@ -187,10 +211,7 @@ internal sealed class PipelineProgressTracker
             return false;
         }
 
-        string currentText = counts[..slash].Trim().Replace(",", "").Replace(" ", "");
-        string totalText = counts[(slash + 1)..].Trim().Replace(",", "").Replace(" ", "");
-
-        if (!long.TryParse(currentText, out current) || !long.TryParse(totalText, out total) || total <= 0)
+        if (!TryParseGroupedCount(counts[..slash], out current) || !TryParseGroupedCount(counts[(slash + 1)..], out total) || total <= 0)
         {
             return false;
         }

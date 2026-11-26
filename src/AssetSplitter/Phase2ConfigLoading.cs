@@ -85,6 +85,14 @@ internal static class Phase2ConfigLoading
 
     internal static void LoadProcessingPrerequisites(PipelineContext context)
     {
+        // Called before OutputRunCache.Evaluate (so the cache diff uses the real -u / --auto-templates
+        // list) and again from Phase 2; only load once per run.
+        if (context.ProcessingPrerequisitesLoaded)
+        {
+            return;
+        }
+
+        context.ProcessingPrerequisitesLoaded = true;
         AssetProcessorConfiguration.LoadRegionalIngredientsConfig(context);
         AssetProcessorConfiguration.LoadAppSettingsConfig(context);
         context.AssetTemplatesList = TemplateBootstrapService.BootstrapTemplates(

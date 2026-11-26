@@ -80,6 +80,40 @@ public sealed class SettingsCoordinatorSaveTests
         }
     }
 
+    [Fact]
+    public void Load_CorruptJson_KeepsBackupBeforeDefaultsAreSaved()
+    {
+        string appData = Path.Combine(Path.GetTempPath(), "as-settings-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(appData);
+        try
+        {
+            string settingsPath = Path.Combine(appData, "settings.json");
+            const string corrupt = "{ \"LastGamePath\": \"C:\\\\Games\\\\Anno\", ";
+            File.WriteAllText(settingsPath, corrupt);
+
+            var store = new AppSettingsStore(new StubPlatformServices(appData));
+            Assert.Null(store.Load());
+
+            string backupPath = settingsPath + ".bad";
+            Assert.True(File.Exists(backupPath));
+            Assert.Equal(corrupt, File.ReadAllText(backupPath));
+        }
+        finally
+        {
+            try
+            {
+                if (Directory.Exists(appData))
+                {
+                    Directory.Delete(appData, recursive: true);
+                }
+            }
+            catch (IOException)
+            {
+                // best effort
+            }
+        }
+    }
+
     private sealed class StubPlatformServices(string appDataPath) : IPlatformServices
     {
         public Task<string?> ShowFolderPickerAsync(string title, string? initialPath = null) =>

@@ -4,6 +4,23 @@ All notable changes to Asset Splitter UI are documented here.
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- **Output cache**: the cache check now uses the real template list (`-u`, `--auto-templates`, auto-updated list). Before, assets from custom templates could be treated as removed, deleted and never rebuilt. The template list, `--auto-templates` and custom fixlist contents are now part of the options fingerprint, so existing outputs do one full rebuild after this update.
+- **Output cache**: changes to `templates.xml`, `properties.xml` or the selected language text file now trigger a full rebuild. Before, stale defaults, names and comments were reported as up to date.
+- **Output cache**: a run with only removals no longer skips a needed `--split-templates` re-split.
+- **Pipeline**: an earlier per-asset error no longer silently skips Phases 6–8; the issue summary is also written when Phase 5 fails fatally.
+- **Merge**: repeated sibling elements (`<Tag>a</Tag><Tag>b</Tag>`) are merged per position instead of collapsing into one.
+- **Config**: `app_settings.json` (snake_case keys) is actually read now; the staging-folder checks honour `baseasset_folder`.
+- **`--auto-templates`**: reads `templates.xml` from the extracted `source_xml` instead of crashing on the game install folder.
+- **Progress bar**: works on non-English Windows locales (`12.200`, `12 200` thousands separators).
+- **UI startup**: no longer crashes on every launch on small or high-DPI screens (work area smaller than the minimum window size).
+- **UI settings**: a briefly locked `settings.json` is no longer overwritten with first-run defaults; a corrupt file is kept as `settings.json.bad`; saves are flushed to disk before replacing the file.
+- **RDAExtract**: without `-n`, newer `dataN.rda` patch files now win over older archives.
+
+---
+
 ## [1.0.0] — 2026-05-24
 
 Initial public release — 211 files across 4 projects (RDAExplorer, AssetSplitter, RDAExtract, AssetSplitterUI).

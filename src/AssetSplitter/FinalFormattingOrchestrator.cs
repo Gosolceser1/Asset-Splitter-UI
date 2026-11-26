@@ -180,7 +180,7 @@ public static class FinalFormattingOrchestrator
         {
             // Empty set = mod-only repair: do not re-format the whole template tree.
             return context.RepairOutputFiles
-                .Where(static path => File.Exists(path) && !IsUnderBaseStaging(path))
+                .Where(path => File.Exists(path) && !IsUnderBaseStaging(context, path))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
         }
@@ -200,7 +200,7 @@ public static class FinalFormattingOrchestrator
         if (context.PreserveOutputDirectories && context.RepairOnlyGuids is not null)
         {
             return context.RepairOutputFiles
-                .Where(static path => File.Exists(path) && IsUnderBaseStaging(path))
+                .Where(path => File.Exists(path) && IsUnderBaseStaging(context, path))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
         }
@@ -216,10 +216,11 @@ public static class FinalFormattingOrchestrator
         return Directory.Exists(baseStaging) ? AssetProcessorFileSystem.FileList(baseStaging) : [];
     }
 
-    private static bool IsUnderBaseStaging(string path)
+    private static bool IsUnderBaseStaging(PipelineContext context, string path)
     {
+        // Honour the configured staging folder name (app_settings.json "baseasset_folder").
+        string stagingFolderName = Path.GetFileName(OutputDirectoryManager.GetBaseAssetGuidStagingPath(context));
         string normalized = path.Replace('\\', '/');
-        return normalized.Contains("/BaseAssetGUID/", StringComparison.OrdinalIgnoreCase)
-            || normalized.Contains("/baseassetguid/", StringComparison.OrdinalIgnoreCase);
+        return normalized.Contains("/" + stagingFolderName + "/", StringComparison.OrdinalIgnoreCase);
     }
 }
