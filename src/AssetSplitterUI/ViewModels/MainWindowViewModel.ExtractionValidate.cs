@@ -60,6 +60,7 @@ public partial class MainWindowViewModel
         }
 
         IsProcessing = true;
+        _consoleOwnerGamePath = GamePath;
         Progress = 0;
         IsComplete = false;
         ResetRunStatus();

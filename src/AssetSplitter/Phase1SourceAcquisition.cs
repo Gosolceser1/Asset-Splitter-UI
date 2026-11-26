@@ -160,7 +160,19 @@ internal static class Phase1SourceAcquisition
                 return 1;
             }
 
-            SourceXmlCache.WriteStamp(sourceXmlPath, gameType, context.DetectedGameBuild, context.Log);
+            if (context.RdaArchiveReadFailures.Count > 0)
+            {
+                // Files may have come from older archives than the newest patch. Do not stamp the
+                // tree as a valid extraction for this build so the next run extracts again, and
+                // surface it as an error instead of silently producing stale output.
+                context.Issues.ReportUnexpectedFileError(
+                    "RDA archive(s) could not be read; extracted source XML may be outdated: "
+                    + string.Join(", ", context.RdaArchiveReadFailures));
+            }
+            else
+            {
+                SourceXmlCache.WriteStamp(sourceXmlPath, gameType, context.DetectedGameBuild, context.Log);
+            }
         }
         else
         {

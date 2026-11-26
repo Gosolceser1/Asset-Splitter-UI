@@ -216,9 +216,13 @@ internal sealed class MainWindowLogStore(Action notifyChanged)
 
         for (int i = 0; i < Lines.Count; i++)
         {
+            // Re-create the item so the color converter runs again, but keep the displayed (possibly
+            // localized) text, its localization key/args and the original backend text. Rebuilding
+            // from OriginalText reverted localized lines to raw English and dropped their keys.
             var line = Lines[i];
-            string source = line.OriginalText ?? line.Text;
-            Lines[i] = LogLine.FromBackendOutput(line.OriginalText ?? source, source);
+            LogLine refreshed = line.WithText(line.Text);
+            refreshed.RepeatCount = line.RepeatCount;
+            Lines[i] = refreshed;
         }
 
         _notifyChanged();

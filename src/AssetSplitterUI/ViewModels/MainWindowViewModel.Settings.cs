@@ -14,7 +14,11 @@ public partial class MainWindowViewModel
     public void LoadSettings()
     {
         _settingsCoordinator.Load(
-            setGamePath: value => GamePath = value,
+            setGamePath: value =>
+            {
+                GamePath = value;
+                _consoleOwnerGamePath = value;
+            },
             setOutputPath: value => OutputPath = value,
             setAddComments: value => AddComments = value,
             setFixDependencies: value => FixDependencies = value,
@@ -174,9 +178,14 @@ public partial class MainWindowViewModel
         // Do not apply game switch while a run is in progress (dropdown is disabled, but guard for safety).
         if (IsProcessing) return;
 
-        _consoleStateStore.Save(GamePath, CaptureConsoleState());
-
         var path = PathDisplayHelper.GetPathWithActualCasing(value.Path);
+        string previousOwner = string.IsNullOrWhiteSpace(_consoleOwnerGamePath) ? GamePath : _consoleOwnerGamePath;
+        bool switchingGame = !PathDisplayHelper.PathsEqual(previousOwner, path);
+        if (switchingGame && !string.IsNullOrWhiteSpace(previousOwner))
+        {
+            _consoleStateStore.Save(previousOwner, CaptureConsoleState());
+        }
+
         _updatingGamePathFromSelector = true;
         try
         {
@@ -193,6 +202,13 @@ public partial class MainWindowViewModel
         CheckSourceFilesExist();
         ScheduleSingleGuidLookup();
         _ = RefreshAvailableLanguagesAsync();
+
+        _consoleOwnerGamePath = path;
+        if (!switchingGame)
+        {
+            // Same game re-selected (e.g. path re-recognized): keep the current console as is.
+            return;
+        }
 
         if (_consoleStateStore.TryGet(path, out var state))
             RestoreConsoleState(state);

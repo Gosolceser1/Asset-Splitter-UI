@@ -145,8 +145,10 @@ public static class GameBuildDetector
             return "";
         }
 
-        string path = Path.GetFullPath(gamePath.Trim());
-        string leaf = Path.GetFileName(Path.TrimEndingDirectorySeparator(path));
+        // Trim the trailing separator before walking up: Directory.GetParent("X\\maindata\\")
+        // returns "X\\maindata", not "X".
+        string path = Path.TrimEndingDirectorySeparator(Path.GetFullPath(gamePath.Trim()));
+        string leaf = Path.GetFileName(path);
         if (leaf.Equals("maindata", StringComparison.OrdinalIgnoreCase))
         {
             return Directory.GetParent(path)?.FullName ?? path;

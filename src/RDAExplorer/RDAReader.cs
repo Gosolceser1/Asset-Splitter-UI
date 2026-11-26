@@ -225,8 +225,11 @@ public sealed class RDAReader : IDisposable
             }
             catch (InvalidDataException ex)
             {
-                this.UpdateOutput($"Skipping memory-resident block ({blockInfo.FileCount} files) -- {ex.Message}");
-                return blockInfo.NextBlock;
+                // Do not silently drop the block: its files would vanish from the archive and callers
+                // would fall back to older archives' copies without any warning.
+                throw new InvalidDataException(
+                    $"Memory-resident block ({blockInfo.FileCount} files) could not be read: {ex.Message}",
+                    ex);
             }
         }
 

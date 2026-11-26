@@ -107,7 +107,14 @@ public sealed class ExtractionCoordinator
             // Run already finished.
         }
 
-        AssetProcessorRunner.TryKillCurrentProcess(fastKill ? 0 : 500);
+        if (fastKill)
+        {
+            // App shutdown: do not wait for a cooperative stop.
+            AssetProcessorRunner.TryKillCurrentProcess(0);
+        }
+
+        // Normal cancel: GuiProcessRunner waits briefly for the backend to honour the cancel
+        // signal (exit 130, output left consistent) and only then kills it.
     }
 
     private static string ResolveAnnoAssetsPath(string outputPath)

@@ -29,7 +29,15 @@ public static class RdaFileExtractor
         }
 
         string? dir = Path.GetDirectoryName(outputPath);
-        foreach (string criteriaGroup in filterCriteria.Split(';'))
+        // Empty groups ("a;" / "a;;b") would otherwise match every entry and extract the whole archive.
+        // Use "/" (or "\\") explicitly to extract everything.
+        string[] criteriaGroups = filterCriteria.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (criteriaGroups.Length == 0)
+        {
+            criteriaGroups = [filterCriteria.Length == 0 ? "/" : filterCriteria];
+        }
+
+        foreach (string criteriaGroup in criteriaGroups)
         {
             string[] parts = criteriaGroup.Split('+');
             bool groupMatches = true;
@@ -127,8 +135,33 @@ public static class RdaFileExtractor
     public static long Extract(RDAFile file, string destinationPath)
     {
         byte[] fileBytes = file.GetData();
-        using var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.Read);
-        fileStream.Write(fileBytes, 0, fileBytes.Length);
+
+        // Write to a temp file and rename into place: a failure mid-write (disk full, AV lock, kill)
+        // must not leave a truncated file that later runs treat as a valid extraction.
+        string tempPath = destinationPath + ".partial";
+        try
+        {
+            using (var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                fileStream.Write(fileBytes, 0, fileBytes.Length);
+            }
+
+            File.Move(tempPath, destinationPath, overwrite: true);
+        }
+        catch
+        {
+            try
+            {
+                File.Delete(tempPath);
+            }
+            catch (Exception cleanupEx) when (cleanupEx is IOException or UnauthorizedAccessException)
+            {
+                // best effort
+            }
+
+            throw;
+        }
+
         TrySetLastWriteTime(destinationPath, file.TimeStamp);
         return fileBytes.LongLength;
     }

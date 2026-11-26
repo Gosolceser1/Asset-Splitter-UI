@@ -83,6 +83,9 @@ public sealed class PipelineContext
 
     /// <summary>True once <see cref="Phase2ConfigLoading.LoadProcessingPrerequisites"/> ran for this run.</summary>
     public bool ProcessingPrerequisitesLoaded { get; set; }
+
+    /// <summary>RDA archive names that threw while being read/extracted in Phase 1 (newest-wins may be wrong).</summary>
+    public List<string> RdaArchiveReadFailures { get; } = [];
     public string[] TemplatesUsed { get; set; } = [];
     public HashSet<string> LoadedPropertyNames { get; set; } = [];
     public PropertyScanResult? PropertyScan { get; set; }

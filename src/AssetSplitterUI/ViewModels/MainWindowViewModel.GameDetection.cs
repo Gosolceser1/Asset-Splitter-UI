@@ -188,6 +188,9 @@ public partial class MainWindowViewModel
                 DetectedGames.Add(game);
             }
 
+            // HasDetectedGames is computed from DetectedGames.Count: notify after the collection is
+            // filled, otherwise the "select one below" picker stays hidden.
+            OnPropertyChanged(nameof(HasDetectedGames));
             SelectedDetectedGame = null;
             IsGamePathRecognized = false;
             SetDetectStatus("statusMessages.selectGameSubfolder");
@@ -206,6 +209,7 @@ public partial class MainWindowViewModel
         if (!DetectedGames.Any(existing => PathDisplayHelper.PathsEqual(existing.Path, path)))
         {
             DetectedGames.Add(game);
+            OnPropertyChanged(nameof(HasDetectedGames));
         }
 
         _updatingGamePathFromSelector = true;

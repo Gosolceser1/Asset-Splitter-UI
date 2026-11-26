@@ -69,7 +69,13 @@ public sealed class GuiProcessRunner
                     }
                 });
 
-            bool wasCancelled = await WaitForExitOrCancellationAsync(process, outputCallback, runCancellationToken);
+            bool wasCancelled = await WaitForExitOrCancellationAsync(
+                process,
+                outputCallback,
+                runCancellationToken,
+                // User cancel: the cancel signal file was written; let the backend stop at its next
+                // checkpoint (exit 130) instead of killing it mid-write. Inactivity timeout: kill now.
+                () => userCancellationToken.IsCancellationRequested ? CooperativeCancelGracePeriod : TimeSpan.Zero);
             bool timedOut = inactivityCts.IsCancellationRequested && !userCancellationToken.IsCancellationRequested;
 
             if (timedOut)
@@ -266,8 +272,14 @@ public sealed class GuiProcessRunner
         }));
     }
 
+    /// <summary>How long a user-cancelled backend may take to exit cooperatively before it is killed.</summary>
+    private static readonly TimeSpan CooperativeCancelGracePeriod = TimeSpan.FromSeconds(8);
+
     private static async ValueTask<bool> WaitForExitOrCancellationAsync(
-        Process process, Action<string>? outputCallback, CancellationToken cancellationToken)
+        Process process,
+        Action<string>? outputCallback,
+        CancellationToken cancellationToken,
+        Func<TimeSpan> getGracePeriod)
     {
         try
         {
@@ -278,9 +290,22 @@ public sealed class GuiProcessRunner
         {
             try
             {
+                TimeSpan grace = getGracePeriod();
+                if (grace > TimeSpan.Zero && !process.HasExited)
+                {
+                    using var graceCts = new CancellationTokenSource(grace);
+                    try
+                    {
+                        await process.WaitForExitAsync(graceCts.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Backend did not stop in time; fall through to the hard kill.
+                    }
+                }
+
                 if (!process.HasExited)
                 {
-                    TryCancelPipeReads(process);
                     process.Kill(true);
                 }
             }

@@ -88,6 +88,9 @@ public static partial class RdaArchiveExtractor
         {
             stats = new RdaExtractStatistics();
             context.Log.Write(ConsoleMessageKind.Warning, string.Format(ConsoleMessages.Get("debugRdaArchiveReadFailed"), rdaName, ex.Message), always: true);
+            // Remember the failure: later archives may now supply older copies of the same files,
+            // so Phase 1 must not stamp this source_xml as a valid extraction for this build.
+            context.RdaArchiveReadFailures.Add(rdaName);
             return false;
         }
     }

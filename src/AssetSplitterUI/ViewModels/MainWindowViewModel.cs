@@ -24,6 +24,13 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly ExtractionCoordinator _extractionCoordinator;
     private readonly MainWindowLogStore _logStore;
     private readonly GameConsoleStateStore _consoleStateStore = new();
+
+    /// <summary>
+    /// Game path whose log/progress the console currently shows. <see cref="GamePath"/> may already
+    /// point at the newly typed/browsed game when the selector change fires, so snapshots must be
+    /// saved under this owner, not the new path. Empty until the first switch or run.
+    /// </summary>
+    private string _consoleOwnerGamePath = "";
     private readonly SettingsCoordinator _settingsCoordinator;
     private readonly BusyIndicatorAnimator _busyAnimator;
     private readonly LocalizedTextState _statusTextState;

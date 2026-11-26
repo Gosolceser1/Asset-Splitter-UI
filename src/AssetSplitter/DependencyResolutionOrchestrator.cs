@@ -40,15 +40,24 @@ public static class DependencyResolutionOrchestrator
         {
             context.ThrowIfCancellationRequested();
             resolvedCount++;
-            ResolveSingleFile(
-                context,
-                cache,
-                baseAssetFilePath,
-                resolvedCount,
-                baseAssetFilesToResolve.Length,
-                pendingFiles,
-                resolvedFiles,
-                resolvingGuids);
+            try
+            {
+                ResolveSingleFile(
+                    context,
+                    cache,
+                    baseAssetFilePath,
+                    resolvedCount,
+                    baseAssetFilesToResolve.Length,
+                    pendingFiles,
+                    resolvedFiles,
+                    resolvingGuids);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // One bad file (save failure, malformed parent, ...) must not abort the whole phase.
+                context.Issues.ReportMergeAssetFailed(baseAssetFilePath, ex.Message);
+                context.Log.WriteLocalized(ConsoleMessageKind.Error, "mergeAssetFailed", always: true, baseAssetFilePath, ex.Message);
+            }
         }
 
         sw.Stop();
@@ -165,6 +174,7 @@ public static class DependencyResolutionOrchestrator
             if (File.Exists(outputPath))
             {
                 OutputDirectoryManager.TryRemoveMergedStagingFile(context, baseAssetFilePath);
+                TrackRepairOutputMove(context, baseAssetFilePath, outputPath);
                 string assetGuid = childAssetDoc.DocumentElement is not null
                     ? XmlNodeText.GetValue(childAssetDoc.DocumentElement, "//Values/Standard/GUID")
                     : "";
@@ -177,6 +187,26 @@ public static class DependencyResolutionOrchestrator
         else
         {
             context.Log.Debug(string.Format(ConsoleMessages.Get("debugDepCouldNotLoadParent"), parentGuid, displayName));
+        }
+    }
+
+    /// <summary>
+    /// Repair runs format only <see cref="PipelineContext.RepairOutputFiles"/>. The merged child now
+    /// lives at <paramref name="outputPath"/> and its staging copy was removed, so swap the path;
+    /// otherwise Phase 7 never formats (comments, cleanup, template folders) the merged asset.
+    /// </summary>
+    private static void TrackRepairOutputMove(PipelineContext context, string stagingPath, string outputPath)
+    {
+        if (context.RepairOnlyGuids is null)
+        {
+            return;
+        }
+
+        List<string> files = context.RepairOutputFiles;
+        files.RemoveAll(path => string.Equals(path, stagingPath, StringComparison.OrdinalIgnoreCase));
+        if (!files.Contains(outputPath, StringComparer.OrdinalIgnoreCase))
+        {
+            files.Add(outputPath);
         }
     }
 
