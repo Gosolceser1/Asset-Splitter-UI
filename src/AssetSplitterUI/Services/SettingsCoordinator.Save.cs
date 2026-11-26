@@ -36,7 +36,7 @@ public partial class SettingsCoordinator
             _settings.SettingsVersion = CurrentSettingsVersion;
             _settings.LastGamePath = gamePath;
             _settings.LastOutputPath = outputPath;
-            _settings.RecentGamePaths = [.. recentGamePaths];
+            _settings.RecentGamePaths = MergeUnavailableRecentGamePaths(recentGamePaths);
             _settings.RecentOutputPaths = [.. recentOutputPaths];
             _settings.AddComments = addComments;
             _settings.FixDependencies = fixDependencies;
@@ -51,9 +51,12 @@ public partial class SettingsCoordinator
         {
             // Paths were cleared after a completed setup — keep preferences and recents.
             // Do not flip into first-run wipe (that used to reset every toggle).
-            _settings.LastGamePath = gamePath.Trim();
+            // A blank game path because the saved folder was offline at launch is kept as is.
+            _settings.LastGamePath = string.IsNullOrWhiteSpace(gamePath) && _unavailableLastGamePath.Length > 0
+                ? _unavailableLastGamePath
+                : gamePath.Trim();
             _settings.LastOutputPath = outputPath.Trim();
-            _settings.RecentGamePaths = [.. recentGamePaths];
+            _settings.RecentGamePaths = MergeUnavailableRecentGamePaths(recentGamePaths);
             _settings.RecentOutputPaths = [.. recentOutputPaths];
             _settings.AddComments = addComments;
             _settings.FixDependencies = fixDependencies;
@@ -66,18 +69,48 @@ public partial class SettingsCoordinator
         }
         else
         {
+            // Setup not finished yet: keep paths blank, but persist the toggles the user sees
+            // (fresh first run = defaults; upgrade from v0/v1 = migrated flags). Writing first-run
+            // defaults here wiped the migrated flags on the first close.
             _settings.UserSetupComplete = false;
             _settings.LastGamePath = "";
             _settings.LastOutputPath = "";
             _settings.RecentGamePaths = [];
             _settings.RecentOutputPaths = [];
             _settings.LastGameLanguage = "";
-            ApplyFirstRunDefaultsToSettings(_settings);
+            _settings.AddComments = addComments;
+            _settings.FixDependencies = fixDependencies;
+            _settings.CreateTemplateFolders = createTemplateFolders;
+            _settings.ModOpsWrap = modOpsWrap;
+            _settings.IncludeDefaultProperties = includeDefaultProperties;
+            _settings.SplitTemplates = splitTemplates;
+            _settings.CreateAssetMods = createAssetMods;
         }
 
         Store.Save(_settings);
         IsFirstRunExperience = !(_settings.SettingsVersion >= CurrentSettingsVersion && _settings.UserSetupComplete);
     }
+
+    private List<string> MergeUnavailableRecentGamePaths(IEnumerable<string> visibleRecentGamePaths)
+    {
+        List<string> merged = [.. visibleRecentGamePaths];
+        foreach (string path in _unavailableRecentGamePaths)
+        {
+            if (merged.Count >= MaxPersistedRecentPaths)
+            {
+                break;
+            }
+
+            if (!merged.Any(existing => PathDisplayHelper.PathsEqual(existing, path)))
+            {
+                merged.Add(path);
+            }
+        }
+
+        return merged;
+    }
+
+    private const int MaxPersistedRecentPaths = 10;
 
     private static void ApplyFirstRunDefaultsToSettings(PersistedAppSettings settings)
     {

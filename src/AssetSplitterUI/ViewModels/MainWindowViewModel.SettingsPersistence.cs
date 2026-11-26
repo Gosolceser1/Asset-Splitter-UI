@@ -34,11 +34,16 @@ public partial class MainWindowViewModel
     /// <summary>Persists current paths, options, theme, language, and recent lists to app data JSON.</summary>
     public void SaveSettings()
     {
+        // The language dropdown is briefly empty/null while its list is rebuilt (or when an
+        // intermediate output path has no source_xml); do not persist that as "no language".
+        string lastGameLanguage = string.IsNullOrEmpty(SelectedLanguage)
+            ? _settingsCoordinator.LastGameLanguage ?? ""
+            : SelectedLanguage;
         _settingsCoordinator.Save(
             GamePath, OutputPath,
             AddComments, FixDependencies, CreateTemplateFolders,
             ModOpsWrap, IncludeDefaultProperties, SplitTemplates, CreateAssetMods,
-            SelectedUILanguage, SelectedTheme, SelectedLanguage,
+            SelectedUILanguage, SelectedTheme, lastGameLanguage,
             RecentGamePaths, RecentOutputPaths);
         OnPropertyChanged(nameof(ShowFirstRunHint));
         NotifyFirstRunStepHintsChanged();

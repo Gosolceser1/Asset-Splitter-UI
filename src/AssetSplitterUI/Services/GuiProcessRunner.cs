@@ -31,6 +31,21 @@ public sealed class GuiProcessRunner
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(userCancellationToken, inactivityCts.Token);
         CancellationToken runCancellationToken = linkedCts.Token;
 
+        // Readers that outlive Run() (pipe held open, timeout below) must not keep invoking the
+        // caller's callback after it finished the run, nor report the "object disposed" error that
+        // Process.Dispose() causes under them.
+        using var readersDetached = new CancellationTokenSource();
+        Action<string>? userOutputCallback = outputCallback;
+        outputCallback = userOutputCallback is null
+            ? null
+            : line =>
+            {
+                if (!readersDetached.IsCancellationRequested)
+                {
+                    userOutputCallback(line);
+                }
+            };
+
         try
         {
             StringBuilder stdoutBuilder = new();
@@ -85,7 +100,13 @@ public sealed class GuiProcessRunner
                     + StringResourceManager.Instance.GetString("consoleMessages.backendInactivityTimeout"));
             }
 
-            await WaitForReadersAsync(process, stdoutTask, stderrTask);
+            // After a normal exit the pipes close once the backend's output is fully drained, so wait
+            // long enough not to lose the final lines ([ISSUE_SUMMARY], completion summary). Only a
+            // killed/timed-out run uses the short wait.
+            await WaitForReadersAsync(
+                stdoutTask,
+                stderrTask,
+                wasCancelled || timedOut ? TimeSpan.FromSeconds(2) : TimeSpan.FromSeconds(30));
 
             if (timedOut)
             {
@@ -97,6 +118,7 @@ public sealed class GuiProcessRunner
         }
         finally
         {
+            readersDetached.Cancel();
             process?.Dispose();
         }
     }
@@ -142,7 +164,7 @@ public sealed class GuiProcessRunner
         }
         if (!string.IsNullOrEmpty(config.SingleGuid))
         {
-            if (!config.SingleGuid.All(char.IsDigit))
+            if (!config.SingleGuid.All(char.IsAsciiDigit))
             {
                 throw new ArgumentException("GUIDs must be numeric.", nameof(config));
             }
@@ -319,40 +341,21 @@ public sealed class GuiProcessRunner
         }
     }
 
-    private static async Task WaitForReadersAsync(Process process, Task stdoutTask, Task stderrTask)
+    private static async Task WaitForReadersAsync(Task stdoutTask, Task stderrTask, TimeSpan timeout)
     {
         try
         {
+            // Output is read with synchronous ReadLine on worker tasks, so CancelOutputRead/
+            // CancelErrorRead (BeginOutputReadLine only) cannot stop them; just bound the wait.
             var allReaders = Task.WhenAll(stdoutTask, stderrTask);
-            if (await Task.WhenAny(allReaders, Task.Delay(TimeSpan.FromSeconds(2))) == allReaders)
+            if (await Task.WhenAny(allReaders, Task.Delay(timeout)) == allReaders)
             {
                 await allReaders;
-            }
-            else
-            {
-                TryCancelPipeReads(process);
             }
         }
         catch (Exception ex)
         {
             // Reader tasks exit when pipes are cancelled or the process dies.
-            Debug.WriteLine(ex);
-        }
-    }
-
-    private static void TryCancelPipeReads(Process process)
-    {
-        try { process.CancelOutputRead(); }
-        catch (Exception ex)
-        {
-            // Best-effort cancellation; pipe may already be closed.
-            Debug.WriteLine(ex);
-        }
-
-        try { process.CancelErrorRead(); }
-        catch (Exception ex)
-        {
-            // Best-effort cancellation; pipe may already be closed.
             Debug.WriteLine(ex);
         }
     }

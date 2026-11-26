@@ -51,12 +51,18 @@ public sealed partial class AnnoInstallationDetector
         }
         else if (IsLinux)
         {
-            string[][] linuxPaths = [["steam", "steamapps", "common"], ["local", "share", "Steam", "steamapps", "common"]];
-            foreach (string[] sub in linuxPaths)
+            // ~/.steam/steam is usually a symlink; the native install lives in ~/.local/share/Steam.
+            string[] steamRoots = [Path.Combine(home, ".steam", "steam"), Path.Combine(home, ".local", "share", "Steam")];
+            foreach (string steamRoot in steamRoots)
             {
-                foreach (string game in AnnoGames.Take(2))
+                var commonPaths = new List<string> { Path.Combine(steamRoot, "steamapps", "common") };
+                commonPaths.AddRange(ReadSteamLibraryCommonFolders(steamRoot));
+                foreach (string commonPath in commonPaths)
                 {
-                    TryAddInstallation(installations, Path.Combine(home, ".steam", Path.Combine(sub), game));
+                    foreach (string game in AnnoGames.Take(2))
+                    {
+                        TryAddInstallation(installations, Path.Combine(commonPath, game));
+                    }
                 }
             }
         }

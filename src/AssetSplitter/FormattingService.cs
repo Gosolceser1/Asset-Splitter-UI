@@ -19,7 +19,8 @@ public static class FormattingService
         PropertyScanResult PropertyScan,
         InheritedIndexCommentCache InheritedIndexCache,
         string ProgressVerb,
-        int TotalFiles);
+        int TotalFiles,
+        System.Collections.Concurrent.ConcurrentQueue<(string FilePath, string TemplateName)> PendingTemplateMoves);
 
     public static int FormatXml(
         PipelineContext context,
@@ -52,7 +53,8 @@ public static class FormattingService
             propertyScan,
             inheritedIndexCache,
             progressVerb,
-            xmlFilePaths.Length);
+            xmlFilePaths.Length,
+            new System.Collections.Concurrent.ConcurrentQueue<(string FilePath, string TemplateName)>());
         System.Threading.Tasks.Parallel.ForEach(
             xmlFilePaths,
             new System.Threading.Tasks.ParallelOptions
@@ -61,6 +63,14 @@ public static class FormattingService
                 CancellationToken = context.CancellationToken,
             },
             xmlFilePath => FormatSingleFile(fileCtx, xmlFilePath, ref processedCount, progressLock));
+
+        // Template-folder moves run after the parallel pass: moving a parent while another worker
+        // still needs it (InheritedIndex comments load parents from their GUID-index path) made the
+        // load fail, cached null and dropped comments for every child of that parent at random.
+        while (fileCtx.PendingTemplateMoves.TryDequeue(out (string FilePath, string TemplateName) move))
+        {
+            MoveToTemplateFolder(context, move.FilePath, move.TemplateName, allowMove);
+        }
 
         // Do not emit a second progress operation ("Formatting...") here — that double-counted
         // completed units in the GUI tracker and jumped the bar to 100% before staging finished.
@@ -298,7 +308,10 @@ public static class FormattingService
                 }
 
                 GeneratedXmlFootprint.Save(xmlDoc, xmlFilePath, ctx.Context);
-                MoveToTemplateFolder(ctx.Context, xmlFilePath, templateName, ctx.AllowMove);
+                if (ctx.Context.CreateTemplateFolders && ctx.AllowMove)
+                {
+                    ctx.PendingTemplateMoves.Enqueue((xmlFilePath, templateName));
+                }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or XmlException)
             {

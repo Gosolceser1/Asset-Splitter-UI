@@ -89,7 +89,7 @@ internal sealed class DependencyResolutionCache(
             resolved = AssetProcessorFileSystem.FindAssetFile(
                 context.AssetOutputDir,
                 guid,
-                searchTemplateFolders: false,
+                searchTemplateFolders: context.CreateTemplateFolders,
                 Path.GetFileName(OutputDirectoryManager.GetBaseAssetGuidStagingPath(context)));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)

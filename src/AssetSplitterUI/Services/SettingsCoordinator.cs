@@ -11,6 +11,14 @@ public partial class SettingsCoordinator(AppSettingsStore store)
     private PersistedAppSettings? _settings;
     private AppSettingsStore Store => store;
 
+    /// <summary>
+    /// Saved game paths hidden at load because their folder does not exist right now (external or
+    /// network drive not mounted). They are merged back on save so one launch without the drive
+    /// does not erase them for good.
+    /// </summary>
+    private readonly List<string> _unavailableRecentGamePaths = [];
+    private string _unavailableLastGamePath = "";
+
     public bool IsLoading { get; private set; }
 
     /// <summary>True when the user has not finished initial path setup; show blank first-run UI.</summary>
@@ -97,6 +105,8 @@ public partial class SettingsCoordinator(AppSettingsStore store)
 
         recentGamePaths.Clear();
         recentOutputPaths.Clear();
+        _unavailableRecentGamePaths.Clear();
+        _unavailableLastGamePath = "";
 
         if (restoreSavedPreferences)
         {
@@ -106,6 +116,7 @@ public partial class SettingsCoordinator(AppSettingsStore store)
             }
             else
             {
+                _unavailableLastGamePath = _settings.LastGamePath?.Trim() ?? "";
                 setGamePath("");
             }
 
@@ -136,9 +147,18 @@ public partial class SettingsCoordinator(AppSettingsStore store)
 
             foreach (string path in _settings.RecentGamePaths ?? [])
             {
-                if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path))
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    continue;
+                }
+
+                if (Directory.Exists(path))
                 {
                     recentGamePaths.Add(PathDisplayHelper.GetPathWithActualCasing(path));
+                }
+                else
+                {
+                    _unavailableRecentGamePaths.Add(path);
                 }
             }
 

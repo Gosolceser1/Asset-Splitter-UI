@@ -272,7 +272,8 @@ internal static partial class OutputRunCache
             // Effective template list (default, -u, --auto-templates or auto-updated list): adding or
             // removing a template changes which assets are extracted, so it must not be Complete.
             "tpl=" + HashTemplateList(context.AssetTemplatesList),
-            "xfile=" + HashOptionalFile(context.CustomFixlistFile),
+            "ufile=" + HashOptionalFile(TemplateLoader.ResolveCustomTemplateFile(context.CustomTemplateFile) ?? context.CustomTemplateFile),
+            "xfile=" + HashOptionalFile(TemplateLoader.ResolveCustomFixlistFile(context.CustomFixlistFile) ?? context.CustomFixlistFile),
             "readme=" + Norm(context.ReadmeLanguage),
             "outSchema=" + OutputSchemaVersion.ToString(),
         ];
@@ -1878,7 +1879,7 @@ internal static partial class OutputRunCache
 
         for (int i = digitStart; i < token.Length; i++)
         {
-            if (!char.IsDigit(token[i]))
+            if (!char.IsAsciiDigit(token[i]))
             {
                 return false;
             }

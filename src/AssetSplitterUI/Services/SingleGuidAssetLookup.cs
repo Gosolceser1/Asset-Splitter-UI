@@ -38,7 +38,7 @@ public static class SingleGuidAssetLookup
             return new SingleGuidLookupResult(SingleGuidLookupStatus.Empty);
         }
 
-        if (!guid.All(char.IsDigit))
+        if (!guid.All(char.IsAsciiDigit))
         {
             return new SingleGuidLookupResult(SingleGuidLookupStatus.Invalid);
         }

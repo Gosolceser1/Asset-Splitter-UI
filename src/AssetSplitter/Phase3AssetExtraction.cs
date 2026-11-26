@@ -134,7 +134,13 @@ internal static class Phase3AssetExtraction
             string[] outputFiles = Directory.GetFiles(context.AssetOutputDir, "*.xml", SearchOption.AllDirectories);
             if (outputFiles.Length > 0)
             {
-                string fileName = Path.GetFileNameWithoutExtension(outputFiles[0]);
+                // With -f the requested child sits in the staging folder and its ancestors at the top
+                // level; enumeration lists top-level files first, so pick the requested GUID's file.
+                string requestedPrefix = context.SingleAssetGuid + " - [";
+                string chosenFile = outputFiles.FirstOrDefault(path =>
+                        Path.GetFileName(path).StartsWith(requestedPrefix, StringComparison.OrdinalIgnoreCase))
+                    ?? outputFiles[0];
+                string fileName = Path.GetFileNameWithoutExtension(chosenFile);
                 int bracketStart = fileName.IndexOf(" - [", StringComparison.Ordinal);
                 if (bracketStart >= 0)
                 {

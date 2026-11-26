@@ -19,6 +19,7 @@ public partial class MainWindowViewModel
         if (validationError is not null)
         {
             SetStatusTextLocalized(validationError);
+            StatusIsError = true;
             return false;
         }
 
@@ -60,45 +61,63 @@ public partial class MainWindowViewModel
         }
 
         IsProcessing = true;
-        _consoleOwnerGamePath = GamePath;
-        Progress = 0;
-        IsComplete = false;
-        ResetRunStatus();
-        _logStore.Clear();
-        _logStore.DeveloperConsoleMode = DebugMode;
-        CloseRawConsoleLogWriter();
-        if (DebugMode)
+        try
         {
-            TryOpenRawConsoleLogWriter();
+            _consoleOwnerGamePath = GamePath;
+            Progress = 0;
+            IsComplete = false;
+            ResetRunStatus();
+            _logStore.Clear();
+            _logStore.DeveloperConsoleMode = DebugMode;
+            CloseRawConsoleLogWriter();
+            if (DebugMode)
+            {
+                TryOpenRawConsoleLogWriter();
+            }
+
+            StatusIsError = false;
+            Phase1Complete = false;
+            SetStatusTextLocalized("statusMessages.initializingExtraction");
+
+            bool initialSourceExtraction = !SourceFilesExist;
+            language = initialSourceExtraction ? "none" : ResolveBackendLanguage();
+            _lastRunBackendAssetLanguage = language;
+            _lastRunBackendSingleGuid = normalizedSingleGuid.Trim();
+            string annoAssetsPath = Path.GetFileName(Path.TrimEndingDirectorySeparator(OutputPath)).Equals("AnnoAssets", StringComparison.OrdinalIgnoreCase)
+                ? OutputPath
+                : Path.Combine(OutputPath, "AnnoAssets");
+            var effectiveConfig = BuildEffectiveRunConfig(language);
+            string? gameBuildLabel = GameBuildDetector
+                .TryDetect(GamePath, SelectedDetectedGame?.GameType ?? DetectedGameType)
+                ?.ToDisplayString();
+            ExtractionRunResultAppender.AppendRunHeader(
+                _logStore, GamePath, OutputPath, language, effectiveConfig.SingleGuid,
+                effectiveConfig.AddComments, effectiveConfig.FixDependencies, effectiveConfig.CreateTemplateFolders,
+                effectiveConfig.ModOpsWrap, effectiveConfig.IncludeDefaultProperties, effectiveConfig.SplitTemplates,
+                effectiveConfig.CreateAssetMods, effectiveConfig.DebugMode,
+                resolvedAnnoAssetsPath: annoAssetsPath,
+                uiLanguageLabel: DebugMode ? SelectedUILanguage : null,
+                gameBuildLabel: gameBuildLabel);
+
+            if (DebugMode)
+            {
+                _logStore.AppendRaw("  AssetProcessor.exe " + BuildBackendArgs(GamePath, annoAssetsPath, language, effectiveConfig.SingleGuid));
+            }
         }
-
-        StatusIsError = false;
-        Phase1Complete = false;
-        SetStatusTextLocalized("statusMessages.initializingExtraction");
-
-        bool initialSourceExtraction = !SourceFilesExist;
-        language = initialSourceExtraction ? "none" : ResolveBackendLanguage();
-        _lastRunBackendAssetLanguage = language;
-        _lastRunBackendSingleGuid = normalizedSingleGuid.Trim();
-        string annoAssetsPath = Path.GetFileName(Path.TrimEndingDirectorySeparator(OutputPath)).Equals("AnnoAssets", StringComparison.OrdinalIgnoreCase)
-            ? OutputPath
-            : Path.Combine(OutputPath, "AnnoAssets");
-        var effectiveConfig = BuildEffectiveRunConfig(language);
-        string? gameBuildLabel = GameBuildDetector
-            .TryDetect(GamePath, SelectedDetectedGame?.GameType ?? DetectedGameType)
-            ?.ToDisplayString();
-        ExtractionRunResultAppender.AppendRunHeader(
-            _logStore, GamePath, OutputPath, language, effectiveConfig.SingleGuid,
-            effectiveConfig.AddComments, effectiveConfig.FixDependencies, effectiveConfig.CreateTemplateFolders,
-            effectiveConfig.ModOpsWrap, effectiveConfig.IncludeDefaultProperties, effectiveConfig.SplitTemplates,
-            effectiveConfig.CreateAssetMods, effectiveConfig.DebugMode,
-            resolvedAnnoAssetsPath: annoAssetsPath,
-            uiLanguageLabel: DebugMode ? SelectedUILanguage : null,
-            gameBuildLabel: gameBuildLabel);
-
-        if (DebugMode)
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            _logStore.AppendRaw("  AssetProcessor.exe " + BuildBackendArgs(GamePath, annoAssetsPath, language, effectiveConfig.SingleGuid));
+            // Setup failed after the run was marked busy (log writer, build detection, header,
+            // argument building). Without this the app stayed "processing" forever and the
+            // exception escaped the async command handler and crashed the app.
+            UILogger.Warning(nameof(MainWindowViewModel), "Run setup failed: " + ex.Message);
+            UILogger.Debug(nameof(MainWindowViewModel), ex);
+            CloseRawConsoleLogWriter();
+            IsProcessing = false;
+            IsComplete = false;
+            SetStatusTextLocalized("consoleMessages.extractionFailed");
+            StatusIsError = true;
+            ExtractionRunResultAppender.AppendError(_logStore, ex.Message);
+            return false;
         }
 
         return true;
@@ -112,7 +131,7 @@ public partial class MainWindowViewModel
             return true;
         }
 
-        if (normalizedSingleGuid.All(char.IsDigit))
+        if (normalizedSingleGuid.All(char.IsAsciiDigit))
         {
             if (!SingleGuid.Equals(normalizedSingleGuid, StringComparison.Ordinal))
             {

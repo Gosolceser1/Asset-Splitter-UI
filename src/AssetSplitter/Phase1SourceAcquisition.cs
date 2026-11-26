@@ -165,9 +165,13 @@ internal static class Phase1SourceAcquisition
                 // Files may have come from older archives than the newest patch. Do not stamp the
                 // tree as a valid extraction for this build so the next run extracts again, and
                 // surface it as an error instead of silently producing stale output.
-                context.Issues.ReportUnexpectedFileError(
-                    "RDA archive(s) could not be read; extracted source XML may be outdated: "
-                    + string.Join(", ", context.RdaArchiveReadFailures));
+                string failedArchives = string.Join(", ", context.RdaArchiveReadFailures);
+                context.Issues.ReportFatal(
+                    PipelineIssueCodes.RdaExtractionFailed,
+                    "RDA archive(s) could not be read; extracted source XML may come from older archives: " + failedArchives,
+                    "An archive in the game's maindata folder is damaged, locked or in an unsupported format.",
+                    "Verify the game files in your launcher and run again.",
+                    failedArchives);
             }
             else
             {

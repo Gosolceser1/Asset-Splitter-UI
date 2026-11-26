@@ -11,9 +11,9 @@ public static partial class OutputDirectoryManager
             return;
         }
 
-        string pathToRemove = context.IsSingleAssetMode
-            ? Directory.GetParent(context.AssetOutputDir)?.FullName ?? context.AssetOutputDir
-            : context.AssetOutputDir;
+        // Single-asset mode: AssetOutputDir is this run's own "<guid> - <name>" folder. Its parent
+        // (single_guid_output_xml_*) holds every earlier single-GUID extraction and must survive.
+        string pathToRemove = context.AssetOutputDir;
 
         if (string.IsNullOrWhiteSpace(pathToRemove) || !Directory.Exists(pathToRemove))
         {
@@ -27,7 +27,11 @@ public static partial class OutputDirectoryManager
 
         try
         {
-            Directory.Delete(pathToRemove, recursive: true);
+            if (!OutputPathSafety.TryDeleteDirectoryRecursive(context, pathToRemove, context.GameOutputRoot))
+            {
+                return;
+            }
+
             if (context.DebugMode)
             {
                 context.Log.Debug(string.Format(ConsoleMessages.Get("debugModExportRemovedStaging"), pathToRemove));

@@ -128,6 +128,34 @@ public static class OutputPathSafety
         }
     }
 
+    /// <summary>
+    /// True if <paramref name="directoryPath"/> or any directory between <paramref name="requiredRoot"/>
+    /// (exclusive) and it is a junction/symlink. Ancestors <em>above</em> the output root (a junctioned
+    /// Documents folder, OneDrive placeholders, macOS /var) are the user's choice of location and must
+    /// not block every cleanup.
+    /// </summary>
+    private static bool HasReparsePointBelowRoot(string directoryPath, string requiredRoot)
+    {
+        try
+        {
+            string fullPath = Path.GetFullPath(directoryPath);
+            string probePath = Path.Combine(fullPath, "_");
+            return RDAExplorer.ArchivePathSanitizer.PathContainsReparsePoint(Path.GetFullPath(requiredRoot), probePath);
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or NotSupportedException or UnauthorizedAccessException)
+        {
+            // Fail closed: cannot prove the path is safe to delete.
+            return true;
+        }
+    }
+
+    private static void LogReparseRefusal(PipelineContext? context, string directoryPath) =>
+        context?.Log.WriteLocalized(
+            ConsoleMessageKind.Error,
+            "outputFolderClearFailed",
+            always: true,
+            $"refusing to delete '{directoryPath}': it contains a junction or symbolic link");
+
     public static bool TryDeleteDirectoryRecursive(PipelineContext? context, string directoryPath, string requiredRoot)
     {
         if (string.IsNullOrWhiteSpace(directoryPath) || string.IsNullOrWhiteSpace(requiredRoot))
@@ -140,8 +168,9 @@ public static class OutputPathSafety
             return false;
         }
 
-        if (DirectoryOrAncestorsHaveReparsePoint(directoryPath))
+        if (HasReparsePointBelowRoot(directoryPath, requiredRoot))
         {
+            LogReparseRefusal(context, directoryPath);
             return false;
         }
 
@@ -173,8 +202,9 @@ public static class OutputPathSafety
             return false;
         }
 
-        if (DirectoryOrAncestorsHaveReparsePoint(directoryPath))
+        if (HasReparsePointBelowRoot(directoryPath, requiredRoot))
         {
+            LogReparseRefusal(context, directoryPath);
             return false;
         }
 

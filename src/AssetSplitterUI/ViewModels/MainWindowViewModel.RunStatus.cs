@@ -21,9 +21,11 @@ public partial class MainWindowViewModel
     public partial string RunPhaseTitle { get; set; } = "";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowRunOperationCounts))]
     public partial string RunOperationCounts { get; set; } = "";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowDeveloperStepPercent))]
     public partial string RunStepPercentText { get; set; } = "";
 
     [ObservableProperty]

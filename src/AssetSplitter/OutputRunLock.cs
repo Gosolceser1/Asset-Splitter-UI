@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text;
 
 namespace AssetProcessor;
@@ -30,36 +29,43 @@ public static class OutputRunLock
         {
             Directory.CreateDirectory(root);
 
-            if (File.Exists(lockPath) && !TryTakeOverStaleLock(lockPath, context))
+            // The lock is the open, exclusive file handle itself, held for the whole run. The OS
+            // releases it when the process exits or crashes, so a leftover file never blocks a new
+            // run, a recycled PID cannot keep it "held", and two runs cannot both take over a stale
+            // lock (the old PID-file check raced: both read the same dead PID, both deleted/created).
+            FileStream stream;
+            try
             {
-                return null;
+                stream = new FileStream(
+                    lockPath,
+                    FileMode.OpenOrCreate,
+                    FileAccess.ReadWrite,
+                    FileShare.None,
+                    bufferSize: 1,
+                    // Removed when the handle closes (Dispose, or process exit on Windows).
+                    FileOptions.DeleteOnClose);
             }
-
-            // Stale takeover left the file in place — remove so CreateNew can claim it exclusively.
-            if (File.Exists(lockPath))
+            catch (IOException)
             {
-                File.Delete(lockPath);
+                context.Log.WriteLocalized(ConsoleMessageKind.Error, "runLockAcquireFailed", always: true, "lock already held by another run");
+                return null;
             }
 
             int pid = Environment.ProcessId;
             try
             {
-                using var stream = new FileStream(
-                    lockPath,
-                    FileMode.CreateNew,
-                    FileAccess.Write,
-                    FileShare.None);
-                byte[] bytes = Encoding.UTF8.GetBytes(pid.ToString());
+                // PID is informational only (diagnostics); ownership is the handle.
+                stream.SetLength(0);
+                byte[] bytes = Encoding.UTF8.GetBytes(pid.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 stream.Write(bytes, 0, bytes.Length);
+                stream.Flush();
             }
             catch (IOException)
             {
-                // Another process won the CreateNew race.
-                context.Log.WriteLocalized(ConsoleMessageKind.Error, "runLockAcquireFailed", always: true, "lock already held");
-                return null;
+                // Writing the informational PID failed; the handle still provides exclusion.
             }
 
-            return new HeldLock(lockPath, pid);
+            return new HeldLock(stream);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -68,51 +74,7 @@ public static class OutputRunLock
         }
     }
 
-    private static bool TryTakeOverStaleLock(string lockPath, PipelineContext context)
-    {
-        try
-        {
-            string text = File.ReadAllText(lockPath).Trim();
-            if (!int.TryParse(text, out int pid) || pid <= 0)
-            {
-                context.Log.WriteLocalized(ConsoleMessageKind.Warning, "runLockStaleInvalid", always: true);
-                return true;
-            }
-
-            if (IsProcessAlive(pid))
-            {
-                context.Log.WriteLocalized(ConsoleMessageKind.Error, "runLockHeldByProcess", always: true, pid.ToString());
-                return false;
-            }
-
-            context.Log.WriteLocalized(ConsoleMessageKind.Warning, "runLockStaleTakeover", always: true, pid.ToString());
-            return true;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            context.Log.WriteLocalized(ConsoleMessageKind.Error, "runLockAcquireFailed", always: true, ex.Message);
-            return false;
-        }
-    }
-
-    private static bool IsProcessAlive(int pid)
-    {
-        try
-        {
-            using Process process = Process.GetProcessById(pid);
-            return !process.HasExited;
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-        catch (InvalidOperationException)
-        {
-            return false;
-        }
-    }
-
-    private sealed class HeldLock(string lockPath, int ownerPid) : IDisposable
+    private sealed class HeldLock(FileStream stream) : IDisposable
     {
         private int _disposed;
 
@@ -125,17 +87,9 @@ public static class OutputRunLock
 
             try
             {
-                if (!File.Exists(lockPath))
-                {
-                    return;
-                }
-
-                // Only delete our own lock — another process may have taken over after a crash race.
-                string text = File.ReadAllText(lockPath).Trim();
-                if (text == ownerPid.ToString())
-                {
-                    File.Delete(lockPath);
-                }
+                // DeleteOnClose removes the lock file while it is still exclusively ours, so a run
+                // that acquires next can never have its lock deleted by this one.
+                stream.Dispose();
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {

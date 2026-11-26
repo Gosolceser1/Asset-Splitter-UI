@@ -78,10 +78,13 @@ public static class TemplateLoader
     /// <exception cref="FileNotFoundException">Thrown when no template config file can be located.</exception>
     public static string[] LoadTemplates(string gameType, string? customTemplatePath = null)
     {
-        if (!string.IsNullOrEmpty(customTemplatePath) && File.Exists(customTemplatePath))
+        string? customTemplateFile = ResolveCustomTemplateFile(customTemplatePath);
+        if (customTemplateFile is not null)
         {
-            return LoadFromFile(customTemplatePath, $"custom template file: {customTemplatePath}");
+            return LoadFromFile(customTemplateFile, $"custom template file: {customTemplateFile}");
         }
+
+        WarnIfCustomFileMissing("-u", customTemplatePath);
 
         string path = GetTemplateConfigPath(gameType);
         if (File.Exists(path))
@@ -99,10 +102,13 @@ public static class TemplateLoader
     /// <exception cref="FileNotFoundException">Thrown when no fixlist config file can be located.</exception>
     public static string[] LoadFixlist(string gameType, string? customFixlistPath = null)
     {
-        if (!string.IsNullOrEmpty(customFixlistPath) && File.Exists(customFixlistPath))
+        string? customFixlistFile = ResolveCustomFixlistFile(customFixlistPath);
+        if (customFixlistFile is not null)
         {
-            return LoadFromFile(customFixlistPath, $"custom fixlist file: {customFixlistPath}");
+            return LoadFromFile(customFixlistFile, $"custom fixlist file: {customFixlistFile}");
         }
+
+        WarnIfCustomFileMissing("-x", customFixlistPath);
 
         string gameName = GetGameConfigName(gameType);
         string path = ResolveConfigPath(ProcessingRulesFolder, $"{gameName}_Fixlist.txt");
@@ -116,6 +122,42 @@ public static class TemplateLoader
     }
 
     /// <summary>Reads non-blank, non-comment lines from a template file. Returns empty array on I/O error.</summary>
+    /// <summary>
+    /// Resolves a <c>-u</c> file name: as given (relative to the working directory), else under
+    /// <c>config/01_Templates</c>. The CLI forbids path separators, so files kept next to the
+    /// default lists were previously never found.
+    /// </summary>
+    public static string? ResolveCustomTemplateFile(string? customTemplatePath) =>
+        ResolveCustomConfigFile(customTemplatePath, TemplatesFolder);
+
+    /// <summary>Resolves a <c>-x</c> file name: as given, else under <c>config/02_Processing_Rules</c>.</summary>
+    public static string? ResolveCustomFixlistFile(string? customFixlistPath) =>
+        ResolveCustomConfigFile(customFixlistPath, ProcessingRulesFolder);
+
+    private static string? ResolveCustomConfigFile(string? fileName, string configFolder)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return null;
+        }
+
+        if (File.Exists(fileName))
+        {
+            return fileName;
+        }
+
+        string inConfig = ResolveConfigPath(configFolder, fileName);
+        return File.Exists(inConfig) ? inConfig : null;
+    }
+
+    private static void WarnIfCustomFileMissing(string option, string? fileName)
+    {
+        if (!string.IsNullOrWhiteSpace(fileName))
+        {
+            Console.WriteLine($"[WARN] {option} file '{fileName}' was not found; using the default list.");
+        }
+    }
+
     private static string[] LoadFromFile(string filePath, string source)
     {
         try

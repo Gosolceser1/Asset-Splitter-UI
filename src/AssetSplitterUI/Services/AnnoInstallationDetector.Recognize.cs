@@ -60,6 +60,9 @@ public sealed partial class AnnoInstallationDetector
 
     public static GameInstallation? TryCreateInstallation(string path)
     {
+        // Registry InstallDir values often look like "C:/.../Anno 117 - Pax Romana - Demo/":
+        // with the trailing separator Path.GetFileName returns "" and the Demo/117 name checks fail.
+        path = NormalizeInstallationPath(path);
         if (!IsValidAnnoInstallation(path))
         {
             return null;

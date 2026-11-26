@@ -164,11 +164,12 @@ public sealed class GauntletResourceTests
                 File.Exists(lockPath),
                 "Lock file remains after TryAcquire returns when Dispose is never called.");
 
-            // Soft-lock gap: OS exclusive handle is NOT held for the run duration
-            // (FileStream is closed immediately after writing the PID).
-            Assert.True(
+            // The exclusive OS handle is held for the whole run (released by the OS on crash).
+            Assert.False(
                 TryOpenExclusive(lockPath),
-                "Lock file is not OS-locked during the hold — only a PID file remains.");
+                "Lock file must stay OS-locked while the run lock is held.");
+
+            held!.Dispose();
         }
         finally
         {

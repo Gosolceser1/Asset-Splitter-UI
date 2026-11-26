@@ -43,15 +43,22 @@ public sealed partial class AnnoInstallationDetector
                 return;
             }
 
-            string commonPath = Path.Combine(steamPath.Replace("/", "\\"), "steamapps", "common");
-            if (!Directory.Exists(commonPath))
-            {
-                return;
-            }
+            string steamRoot = steamPath.Replace("/", "\\");
+            var commonPaths = new List<string> { Path.Combine(steamRoot, "steamapps", "common") };
+            // Additional Steam libraries (e.g. D:\Games\Steam) are only listed in libraryfolders.vdf.
+            commonPaths.AddRange(ReadSteamLibraryCommonFolders(steamRoot));
 
-            foreach (string directory in Directory.GetDirectories(commonPath, "Anno*"))
+            foreach (string commonPath in commonPaths.Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                TryAddInstallation(installations, directory);
+                if (!Directory.Exists(commonPath))
+                {
+                    continue;
+                }
+
+                foreach (string directory in Directory.GetDirectories(commonPath, "Anno*"))
+                {
+                    TryAddInstallation(installations, directory);
+                }
             }
         });
 

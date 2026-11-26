@@ -78,7 +78,13 @@ internal static class DirectoryTreeFingerprint
                             return;
                         }
 
-                        string? fileHash = TryComputeFileSha256Hex(file);
+                        string? fileHash = TryComputeFileSha256HexWithRetry(file, out bool vanished);
+                        if (vanished)
+                        {
+                            // Deleted between enumeration and hashing: it is simply not part of the tree.
+                            return;
+                        }
+
                         if (fileHash is null)
                         {
                             Interlocked.Exchange(ref failed, 1);
@@ -105,6 +111,38 @@ internal static class DirectoryTreeFingerprint
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Hashes <paramref name="file"/>, retrying briefly on failure: antivirus, backup or cloud-sync
+    /// tools often hold short sharing locks, and a single failed file makes the whole tree map null
+    /// (which forces a Full rebuild or stamps a blank digest).
+    /// </summary>
+    private static string? TryComputeFileSha256HexWithRetry(string file, out bool vanished)
+    {
+        vanished = false;
+        int[] delaysMs = [0, 100, 300];
+        foreach (int delay in delaysMs)
+        {
+            if (delay > 0)
+            {
+                Thread.Sleep(delay);
+            }
+
+            string? hash = TryComputeFileSha256Hex(file);
+            if (hash is not null)
+            {
+                return hash;
+            }
+
+            if (!File.Exists(file))
+            {
+                vanished = true;
+                return null;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>Stable digest of a path→hash map (order-independent via sorted keys).</summary>

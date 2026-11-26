@@ -96,7 +96,15 @@ internal sealed record AssetProcessorCommandLineOptions(
     private static string ParseSingleAssetGuid(string[] args)
     {
         string guid = ParseOptionValue(args, "-g");
-        if (!string.IsNullOrEmpty(guid) && !guid.All(char.IsDigit))
+        if (string.IsNullOrEmpty(guid)
+            && args.Any(arg => arg.Equals("-g", StringComparison.Ordinal) || arg.Equals("-g:", StringComparison.Ordinal)))
+        {
+            // "-g" at the end or followed by another option used to silently run a full extraction
+            // (and prepare/clear the full output tree) instead of the requested single asset.
+            throw new ArgumentException("Option -g requires a numeric GUID (e.g. -g 1010017).");
+        }
+
+        if (!string.IsNullOrEmpty(guid) && !guid.All(char.IsAsciiDigit))
         {
             throw new ArgumentException($"Invalid GUID '{guid}' - GUIDs must be numeric (e.g. 1010017).");
         }

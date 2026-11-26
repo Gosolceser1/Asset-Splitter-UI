@@ -45,6 +45,29 @@ internal static class AssetProcessorFileSystem
         {
             yield return path;
         }
+
+        // With -t, unchanged assets from earlier runs live in <Template>/ subfolders. Repair runs
+        // only re-extract changed GUIDs, so their parents must be found there (index is first-wins:
+        // staging and fresh top-level files above take precedence).
+        if (context.CreateTemplateFolders && Directory.Exists(context.AssetOutputDir))
+        {
+            string stagingFull = Path.TrimEndingDirectorySeparator(Path.GetFullPath(stagingDir));
+            foreach (string subdirectory in Directory.EnumerateDirectories(context.AssetOutputDir))
+            {
+                if (string.Equals(
+                        Path.TrimEndingDirectorySeparator(Path.GetFullPath(subdirectory)),
+                        stagingFull,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                foreach (string path in Directory.EnumerateFiles(subdirectory, "*.xml", SearchOption.AllDirectories))
+                {
+                    yield return path;
+                }
+            }
+        }
     }
 
     public static IEnumerable<string> CollectGuidIndexFilePaths(string assetOut, string stagingFolderName = "BaseAssetGUID")
