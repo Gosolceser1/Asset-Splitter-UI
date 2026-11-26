@@ -9,6 +9,12 @@ public partial class MainWindowViewModel
 {
     private readonly ConsoleRunStatusPresenter _runStatus = new();
 
+    /// <summary>Backend lines waiting to be fed to <see cref="_runStatus"/> on the UI thread.</summary>
+    private readonly System.Collections.Concurrent.ConcurrentQueue<string> _pendingRunStatusLines = new();
+
+    /// <summary>1 while a drain of <see cref="_pendingRunStatusLines"/> is queued on the dispatcher.</summary>
+    private int _runStatusDrainScheduled;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowStructuredRunStatus))]
     [NotifyPropertyChangedFor(nameof(ShowLegacyStatusLine))]
@@ -61,6 +67,7 @@ public partial class MainWindowViewModel
 
     private void ResetRunStatus()
     {
+        _pendingRunStatusLines.Clear();
         _runStatus.Reset();
         RunHasLiveDetail = false;
         RunPhaseTitle = "";
@@ -73,14 +80,8 @@ public partial class MainWindowViewModel
         RunStatusGuidSeparator = "";
     }
 
-    private void UpdateRunStatusFromLine(string? line)
+    private void ApplyRunStatusProperties()
     {
-        if (string.IsNullOrWhiteSpace(line))
-        {
-            return;
-        }
-
-        _runStatus.Feed(line);
         RunPhaseTitle = _runStatus.PhaseTitle;
         RunOperationCounts = _runStatus.OperationCounts;
         RunStepPercentText = string.IsNullOrEmpty(_runStatus.StepPercent)
@@ -94,8 +95,40 @@ public partial class MainWindowViewModel
         RunHasLiveDetail = _runStatus.HasLiveDetail;
     }
 
-    private void PostRunStatusUpdate(string? line) =>
-        Dispatcher.UIThread.Post(() => UpdateRunStatusFromLine(line));
+    /// <summary>
+    /// Queues a backend line for the run-status header. Lines are fed in order, but at most one
+    /// dispatcher post is pending at a time and the bound properties are updated once per drain;
+    /// posting one UI callback per stdout line flooded the dispatcher on verbose runs.
+    /// </summary>
+    private void PostRunStatusUpdate(string? line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return;
+        }
+
+        _pendingRunStatusLines.Enqueue(line);
+        if (Interlocked.Exchange(ref _runStatusDrainScheduled, 1) == 0)
+        {
+            Dispatcher.UIThread.Post(DrainRunStatusLines, DispatcherPriority.Background);
+        }
+    }
+
+    private void DrainRunStatusLines()
+    {
+        Interlocked.Exchange(ref _runStatusDrainScheduled, 0);
+        bool fedAny = false;
+        while (_pendingRunStatusLines.TryDequeue(out string? line))
+        {
+            _runStatus.Feed(line);
+            fedAny = true;
+        }
+
+        if (fedAny)
+        {
+            ApplyRunStatusProperties();
+        }
+    }
 
     private void RefreshLocalizedLogLinesInternal() => _logStore.RefreshLocalizedLines();
 }

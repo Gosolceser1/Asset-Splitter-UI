@@ -11,4 +11,7 @@ public sealed class RdaExtractStatistics
 
     /// <summary>Archive blocks that could not be read (their files are missing from this archive).</summary>
     public IReadOnlyList<string> UnreadableBlocks { get; set; } = [];
+
+    /// <summary>Matched entries that failed to decode or write ("name: reason").</summary>
+    public IReadOnlyList<string> FailedEntries { get; set; } = [];
 }

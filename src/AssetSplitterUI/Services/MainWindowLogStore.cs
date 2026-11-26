@@ -206,23 +206,12 @@ internal sealed class MainWindowLogStore(Action notifyChanged)
             return;
         }
 
-        // Avoid Clear()+Add() storms on large logs — that blocks the UI thread for minutes and
-        // matches Avalonia slow-close reports (AvaloniaUI/Avalonia#3622, #6660).
-        if (Lines.Count > 500)
+        // Only realized (visible) rows are subscribed, so this is cheap even for 12k lines, and it
+        // keeps each line's text, localization key and repeat count. The old approach replaced every
+        // item (and skipped logs over 500 lines, leaving them in the previous theme's colors).
+        foreach (LogLine line in Lines)
         {
-            _notifyChanged();
-            return;
-        }
-
-        for (int i = 0; i < Lines.Count; i++)
-        {
-            // Re-create the item so the color converter runs again, but keep the displayed (possibly
-            // localized) text, its localization key/args and the original backend text. Rebuilding
-            // from OriginalText reverted localized lines to raw English and dropped their keys.
-            var line = Lines[i];
-            LogLine refreshed = line.WithText(line.Text);
-            refreshed.RepeatCount = line.RepeatCount;
-            Lines[i] = refreshed;
+            line.NotifyThemeChanged();
         }
 
         _notifyChanged();

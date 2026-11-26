@@ -129,7 +129,10 @@ public partial class MainWindowViewModel
             TF("developerReport.options", AddComments, FixDependencies, CreateTemplateFolders, ModOpsWrap, IncludeDefaultProperties, SplitTemplates, CreateAssetMods, DebugMode),
             TF("developerReport.pathChecks", Directory.Exists(GamePath), Directory.Exists(OutputPath), Directory.Exists(annoAssetsPath), Directory.Exists(sourceXmlPath), Directory.Exists(Path.Combine(GamePath, "maindata"))),
             T("developerReport.backendCommand"),
-            "  AssetProcessor.exe " + BuildBackendArgs(GamePath, annoAssetsPath, languageForReport, guidOverrideForBackendArgs),
+            // The command that actually ran (e.g. first-run source extraction), not one rebuilt from
+            // the current toggles; fall back to the current settings before any run.
+            "  AssetProcessor.exe " + (_lastRunBackendCommandLine
+                ?? BuildBackendArgs(GamePath, annoAssetsPath, languageForReport, guidOverrideForBackendArgs)),
             "",
         };
 

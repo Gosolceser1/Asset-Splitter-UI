@@ -65,14 +65,25 @@ public static class RDAFileExtension
             TotalEntries = allFiles.Count,
             UnreadableBlocks = [.. reader.UnreadableBlocks],
         };
+        var failedEntries = new List<string>();
         foreach (RDAFile file in allFiles)
         {
-            if (ExtractEntry(file, folder, filterCriteria, bare, skipExistingBareOutput, stats, onExtracted, onSkipped))
+            try
             {
-                stats.Extracted++;
+                if (ExtractEntry(file, folder, filterCriteria, bare, skipExistingBareOutput, stats, onExtracted, onSkipped))
+                {
+                    stats.Extracted++;
+                }
+            }
+            catch (Exception ex) when (ex is InvalidDataException or IOException or InvalidOperationException or UnauthorizedAccessException)
+            {
+                // One corrupt or unwritable entry must not abort the rest of the archive; callers see
+                // the failures and must not treat the extraction as complete.
+                failedEntries.Add($"{file.FileName}: {ex.Message}");
             }
         }
 
+        stats.FailedEntries = failedEntries;
         return stats;
     }
 

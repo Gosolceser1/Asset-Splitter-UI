@@ -101,9 +101,10 @@ public partial class MainWindowViewModel
                 uiLanguageLabel: DebugMode ? SelectedUILanguage : null,
                 gameBuildLabel: gameBuildLabel);
 
+            _lastRunBackendCommandLine = FormatEffectiveBackendArgs(effectiveConfig, annoAssetsPath);
             if (DebugMode)
             {
-                _logStore.AppendRaw("  AssetProcessor.exe " + FormatEffectiveBackendArgs(effectiveConfig, annoAssetsPath));
+                _logStore.AppendRaw("  AssetProcessor.exe " + _lastRunBackendCommandLine);
             }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)

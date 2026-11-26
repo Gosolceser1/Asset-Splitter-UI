@@ -27,8 +27,18 @@ public enum LogLineKind
 }
 
 /// <summary>One console log entry: text, display category, and optional localization metadata for language refresh.</summary>
-public sealed class LogLine
+public sealed class LogLine : System.ComponentModel.INotifyPropertyChanged
 {
+    /// <summary>
+    /// Raised (for <see cref="Kind"/>) when the theme changes so the realized log rows re-run their
+    /// color converters. Cheaper than replacing every item and works for logs of any size.
+    /// </summary>
+    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+
+    private static readonly System.ComponentModel.PropertyChangedEventArgs KindChangedArgs = new(nameof(Kind));
+
+    internal void NotifyThemeChanged() => PropertyChanged?.Invoke(this, KindChangedArgs);
+
     private readonly Lazy<ProgressParts?> _progressParts;
 
     public string Text { get; }

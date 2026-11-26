@@ -57,11 +57,11 @@ public static partial class RdaArchiveExtractor
                 }
             : null);
 
-            if (stats.UnreadableBlocks.Count > 0)
+            if (stats.UnreadableBlocks.Count > 0 || stats.FailedEntries.Count > 0)
             {
-                // Files from the unreadable block may now come from older archives: warn and do not
-                // trust this extraction (Phase 1 reports it and skips the source_xml stamp).
-                foreach (string blockMessage in stats.UnreadableBlocks)
+                // Files from the unreadable block / failed entries may now come from older archives:
+                // warn and do not trust this extraction (Phase 1 reports it and skips the stamp).
+                foreach (string blockMessage in stats.UnreadableBlocks.Concat(stats.FailedEntries))
                 {
                     context.Log.Write(
                         ConsoleMessageKind.Warning,

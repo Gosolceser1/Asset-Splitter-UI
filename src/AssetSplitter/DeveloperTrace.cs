@@ -15,8 +15,10 @@ internal static class DeveloperTrace
 
     private static bool ShouldUseInterval(PipelineContext context, int current, int total)
     {
-        int defaultInterval = total >= 5_000 ? 500 : 100;
-        int interval = context.AppSettingsConfig?.Settings?.FileProcessing?.ProgressInterval ?? defaultInterval;
+        // ProgressInterval always has a value once app_settings.json loads, so the large-run
+        // throttle (500) used to be dead code; apply it on top of the configured interval.
+        int configured = context.AppSettingsConfig?.Settings?.FileProcessing?.ProgressInterval ?? 100;
+        int interval = total >= 5_000 && configured > 0 ? Math.Max(configured, 500) : configured;
         return interval > 0 && current % interval == 0;
     }
 }

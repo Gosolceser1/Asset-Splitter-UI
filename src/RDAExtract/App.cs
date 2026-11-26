@@ -95,10 +95,12 @@ internal sealed class App
 
         if (allRdas.Length > 0)
         {
-            foreach (FileInfo file in allRdas.OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase))
+            FileInfo[] orderedRdas = [.. allRdas.OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)];
+            for (int i = 0; i < orderedRdas.Length; i++)
             {
-                File.WriteAllText(watchFile, $"{file.Name}{Environment.NewLine}{allRdas.Length - 1}");
-                ProcessSingleRda(file.FullName, outDir, match, bare, listOnly);
+                // Same "<current index>\n<max index>" format as the dataN.rda branch.
+                File.WriteAllText(watchFile, $"{i}{Environment.NewLine}{orderedRdas.Length - 1}");
+                ProcessSingleRda(orderedRdas[i].FullName, outDir, match, bare, listOnly);
             }
             return 0;
         }
@@ -186,9 +188,17 @@ internal sealed class App
         {
             Console.WriteLine($"Extracting from {rdaFilePath} ...");
             RdaExtractStatistics stats = RDAFileExtension.ExtractAll(rdaFilePath, outDir, match, bare, skipExistingBareOutput);
-            foreach (string unreadableBlock in stats.UnreadableBlocks)
+            foreach (string unreadableBlock in stats.UnreadableBlocks.Concat(stats.FailedEntries))
             {
                 Console.WriteLine($"WARNING: {rdaFilePath}: {unreadableBlock}");
+            }
+
+            if (bare && !skipExistingBareOutput && stats.SkippedExistingBare > 0)
+            {
+                // -n never overwrites (first file with a name wins); say so instead of silently
+                // keeping stale files from an earlier run into the same folder.
+                Console.WriteLine(
+                    $"NOTE: {stats.SkippedExistingBare} file(s) were not written because a file with the same name already exists in the output folder (-n never overwrites).");
             }
 
             Console.WriteLine("File(s) unpacked.");

@@ -5,6 +5,12 @@ public static class RdaFileExtractor
     public delegate void RdaExtractedHandler(string archivePath, string outputPath, long bytes);
     public delegate void RdaSkippedHandler(string archivePath, string reason);
 
+    /// <summary>Extracts <paramref name="file"/> when it matches <paramref name="filterCriteria"/>.</summary>
+    /// <param name="bare">
+    /// Store under the file name only. Bare output never overwrites: the first file with a given name
+    /// wins (callers process the newest archive first). <paramref name="skipExistingBareOutput"/> only
+    /// selects the skip reason reported ("newer patch" vs. "basename collision").
+    /// </param>
     public static bool ExtractToRoot(
         RDAFile file,
         string folder,

@@ -35,6 +35,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     /// <summary>UTC start of the current/last run; older issue reports are not shown as its result.</summary>
     private DateTime? _lastRunStartedUtc;
 
+    /// <summary>Arguments of the last launched backend run (effective config), for the developer report.</summary>
+    private string? _lastRunBackendCommandLine;
+
     /// <summary>Sink registered as <see cref="UILogger.VisibleLog"/>; cleared again on dispose.</summary>
     private readonly Action<string> _visibleLogSink;
     private readonly SettingsCoordinator _settingsCoordinator;
@@ -383,6 +386,15 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             {
                 _logStore.RefreshColors();
             }
+
+            // These bindings use theme-aware converters that only re-run when the bound value
+            // changes; re-raise them so status and run-header colors follow the new theme.
+            OnPropertyChanged(nameof(StatusIsError));
+            OnPropertyChanged(nameof(RunStatusOperation));
+            OnPropertyChanged(nameof(RunStatusGuid));
+            OnPropertyChanged(nameof(RunStatusGuidSeparator));
+            OnPropertyChanged(nameof(RunStatusAssetName));
+            OnPropertyChanged(nameof(RunStatusTemplate));
         }, DispatcherPriority.Background);
     }
 
