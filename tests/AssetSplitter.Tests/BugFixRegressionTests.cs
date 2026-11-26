@@ -6,10 +6,11 @@ namespace AssetSplitter.Tests;
 public sealed class BugFixRegressionTests
 {
     [Theory]
-    [InlineData(new[] { "game", "out", "english", "-g" })]
-    [InlineData(new[] { "game", "out", "english", "-g", "-c" })]
-    public void Parse_GuidOptionWithoutValue_Throws(string[] args)
+    [InlineData("-g")]
+    [InlineData("-g", "-c")]
+    public void Parse_GuidOptionWithoutValue_Throws(params string[] options)
     {
+        string[] args = ["game", "out", "english", .. options];
         Assert.Throws<ArgumentException>(() => AssetProcessorCommandLineOptions.Parse(args));
     }
 

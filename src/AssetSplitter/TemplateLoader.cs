@@ -121,7 +121,6 @@ public static class TemplateLoader
           $"Fixlist config file not found: {path}. Please ensure config/02_Processing_Rules/{gameName}_Fixlist.txt exists.");
     }
 
-    /// <summary>Reads non-blank, non-comment lines from a template file. Returns empty array on I/O error.</summary>
     /// <summary>
     /// Resolves a <c>-u</c> file name: as given (relative to the working directory), else under
     /// <c>config/01_Templates</c>. The CLI forbids path separators, so files kept next to the
@@ -158,6 +157,7 @@ public static class TemplateLoader
         }
     }
 
+    /// <summary>Reads non-blank, non-comment lines from a template file. Returns empty array on I/O error.</summary>
     private static string[] LoadFromFile(string filePath, string source)
     {
         try

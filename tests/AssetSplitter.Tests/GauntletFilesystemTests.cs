@@ -419,10 +419,9 @@ public sealed class GauntletFilesystemTests : IDisposable
         using IDisposable? held = OutputRunLock.TryAcquire(context);
         Assert.NotNull(held);
 
-        File.WriteAllText(lockPath, "not-a-pid");
-        // Release then re-acquire after invalid lock left behind by tampering during hold is undefined;
-        // instead verify invalid lock alone is take-overable:
-        held.Dispose();
+        // The lock is an exclusive OS handle held for the whole run: tampering is refused while held.
+        Assert.ThrowsAny<IOException>(() => File.WriteAllText(lockPath, "not-a-pid"));
+        held!.Dispose();
         File.WriteAllText(lockPath, "nope");
         using IDisposable? again = OutputRunLock.TryAcquire(context);
         Assert.NotNull(again);

@@ -57,6 +57,21 @@ public static partial class RdaArchiveExtractor
                 }
             : null);
 
+            if (stats.UnreadableBlocks.Count > 0)
+            {
+                // Files from the unreadable block may now come from older archives: warn and do not
+                // trust this extraction (Phase 1 reports it and skips the source_xml stamp).
+                foreach (string blockMessage in stats.UnreadableBlocks)
+                {
+                    context.Log.Write(
+                        ConsoleMessageKind.Warning,
+                        string.Format(ConsoleMessages.Get("debugRdaArchiveReadFailed"), rdaName, blockMessage),
+                        always: true);
+                }
+
+                context.RdaArchiveReadFailures.Add(rdaName);
+            }
+
             if (context.DebugMode && archiveDiagnostics is not null)
             {
                 if (compactAnno1800Debug)

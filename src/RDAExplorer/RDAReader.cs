@@ -25,6 +25,13 @@ public sealed class RDAReader : IDisposable
     public ulong FirstBlockOffset { get; private set; }
     public IReadOnlyList<RdaBlockDiagnostics> BlockDiagnostics => this.blockDiagnostics;
     private readonly List<RDASkippedDataSection> skippedDataSections = [];
+    private readonly List<string> unreadableBlocks = [];
+
+    /// <summary>
+    /// Blocks that could not be read during the last <see cref="ReadRDAFile"/> (their files are
+    /// missing from <see cref="RdaFolder"/>). Callers must not treat such an archive as complete.
+    /// </summary>
+    public IReadOnlyList<string> UnreadableBlocks => this.unreadableBlocks;
     /// <summary>Optional: when set, progress is reported here during <see cref="ReadRDAFile"/>.</summary>
     public BackgroundWorker? BackgroundWorker { get; set; }
 
@@ -47,6 +54,7 @@ public sealed class RDAReader : IDisposable
     /// <exception cref="InvalidOperationException">When file format is invalid or stream read fails.</exception>
     public void ReadRDAFile()
     {
+        this.unreadableBlocks.Clear();
         this.DisposeMemoryResidentHelpers();
         this.read?.Dispose();
         this.read = null;
@@ -225,11 +233,12 @@ public sealed class RDAReader : IDisposable
             }
             catch (InvalidDataException ex)
             {
-                // Do not silently drop the block: its files would vanish from the archive and callers
-                // would fall back to older archives' copies without any warning.
-                throw new InvalidDataException(
-                    $"Memory-resident block ({blockInfo.FileCount} files) could not be read: {ex.Message}",
-                    ex);
+                // Skip the block so the archive's other files stay usable, but record it: silently
+                // dropping it made callers fall back to older archives' copies without any warning.
+                string message = $"Memory-resident block ({blockInfo.FileCount} files) could not be read: {ex.Message}";
+                this.unreadableBlocks.Add(message);
+                this.UpdateOutput("Skipping " + message);
+                return blockInfo.NextBlock;
             }
         }
 

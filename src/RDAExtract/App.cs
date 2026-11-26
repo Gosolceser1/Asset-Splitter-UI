@@ -185,7 +185,12 @@ internal sealed class App
         else
         {
             Console.WriteLine($"Extracting from {rdaFilePath} ...");
-            RDAFileExtension.ExtractAll(rdaFilePath, outDir, match, bare, skipExistingBareOutput);
+            RdaExtractStatistics stats = RDAFileExtension.ExtractAll(rdaFilePath, outDir, match, bare, skipExistingBareOutput);
+            foreach (string unreadableBlock in stats.UnreadableBlocks)
+            {
+                Console.WriteLine($"WARNING: {rdaFilePath}: {unreadableBlock}");
+            }
+
             Console.WriteLine("File(s) unpacked.");
         }
     }

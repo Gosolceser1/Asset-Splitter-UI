@@ -60,7 +60,11 @@ public static class RDAFileExtension
             Blocks = reader.BlockDiagnostics.ToArray()
         });
 
-        var stats = new RdaExtractStatistics { TotalEntries = allFiles.Count };
+        var stats = new RdaExtractStatistics
+        {
+            TotalEntries = allFiles.Count,
+            UnreadableBlocks = [.. reader.UnreadableBlocks],
+        };
         foreach (RDAFile file in allFiles)
         {
             if (ExtractEntry(file, folder, filterCriteria, bare, skipExistingBareOutput, stats, onExtracted, onSkipped))
